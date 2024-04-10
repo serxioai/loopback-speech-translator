@@ -5,7 +5,6 @@ import time
 import json
 import queue
 import difflib
-import threading
 
 class SpeechAPI:
 
@@ -24,8 +23,6 @@ class SpeechAPI:
         self.recognized_callback = None
         self.recognizing_callback = None
         self.done = False
-        self.words_per_minute = 0
-        self.start_time = time.time()
         
         # Dictionary to hold the result from the recognized events
         self.recognized_buffer = {lang: [] for lang in self.translation_languages}
@@ -42,39 +39,10 @@ class SpeechAPI:
 
         while not done:
             time.sleep(.5)
- 
-    def start_polling_recognized_buffer_length(self):
-        # Create and start a thread for polling recognized text length
-        self.polling_thread = threading.Thread(target=self.poll_recognized_buffer_length)
-        self.polling_thread.daemon = True  # Set as daemon so it stops when the main thread stops
-        self.polling_thread.start()
+        
+    def get_recognized_buffer(self):
+        return self.recognized_buffer
     
-    def poll_recognized_buffer_length(self):
-        while True:
-            # recognized_text_length = {lang: len(buffer) for lang, buffer in self.recognized_buffer.items()}
-            source_temp_buffer = self.recognized_buffer[self.translation_languages[0]]
-            # print(source_temp_buffer)
-            # print(f"total words: {total_words}")
-            time.sleep(10)
-
-    def calculate_words_per_minute(self, recognized_text):
-        # Split the recognized text into words
-        words = recognized_text.split()
-        
-        # Update total word count
-        total_words += len(words)
-
-        # Calculate time elapsed
-        current_time = time.time()
-        time_elased = current_time - self.start_time
-
-        # Calculate wpm
-        if time_elased > 0:
-            self.words_per_minute = (total_words / time_elased) * 60
-        else:
-            self.words_per_minute = 0
-        
-
     def configure_session(self):
         self.set_translation_recognizer()
         self.set_event_callbacks()
@@ -161,8 +129,8 @@ class SpeechAPI:
         return speech_translation_config
 
     def set_audio_config(self):
-        audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
-        #audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
+        # audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
+        audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
         return audio_config
     
     def set_auto_detect_source_language_config(self):
@@ -236,9 +204,6 @@ class SpeechAPI:
             self.current_pointer[language_code] += 1
             return transcription
         return None
-
-    def get_words_per_minute(self):
-        return self.words_per_minute
 
     def get_recognized_translations(self, language):
         translations = self.recognized_buffer.get(language, [""])
