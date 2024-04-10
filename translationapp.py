@@ -4,9 +4,7 @@ import os
 from dotenv import load_dotenv
 from speech_api import SpeechAPI
 import time
-#from audio_module import list_audio_devices, capture_audio
-#from sqlalchemy.orm import sessionmaker
-#from sqlalchemy import create_engine
+from utils import WordsPerMinute
 
 # Load the .env file
 load_dotenv()
@@ -26,6 +24,7 @@ class TranslationApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.speechAPI = None
+        self.words_per_minute = None
         self.build_frame()
          
     def start_session(self):
@@ -40,6 +39,8 @@ class TranslationApp(tk.Frame):
                                    speech_recognition_language=speechRecognitionLanguage, 
                                    detectable_languages=detectableLanguages,
                                    end_silence_timeout=endSilenceTimeout)
+        
+        self.words_per_minute = utils.WordsPerMinute(self.speechAPI.get_recognized_buffer())
         
         # Connect the buffers holding the event results
         self.speechAPI.set_recognized_callback(self.on_recognized_updated)
