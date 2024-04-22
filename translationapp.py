@@ -4,7 +4,6 @@ import os
 from dotenv import load_dotenv
 from speech_api import SpeechAPI
 import time
-from utils import WordsPerMinute
 
 # Load the .env file
 load_dotenv()
@@ -40,8 +39,6 @@ class TranslationApp(tk.Frame):
                                    detectable_languages=detectableLanguages,
                                    end_silence_timeout=endSilenceTimeout)
         
-        self.words_per_minute = WordsPerMinute(self.speechAPI.get_recognized_buffer())
-        
         # Connect the buffers holding the event results
         self.speechAPI.set_recognized_callback(self.on_recognized_updated)
         self.speechAPI.set_recognizing_callback(self.on_recognizing_updated)
@@ -61,7 +58,7 @@ class TranslationApp(tk.Frame):
         self.speechAPI.reset_translation_recognizer()
 
     def update_recognized_texts(self, recognized_source, recognized_target):
-
+        
         current_time = time.strftime("%H:%M:%S")  # Get current time
         timestamped_source = f"{current_time} - {recognized_source}"
         timestamped_target = f"{current_time} - {recognized_target}"
@@ -73,10 +70,6 @@ class TranslationApp(tk.Frame):
         # Highlight the newly inserted text
         self.highlight_text(self.recognized_text_source)
         self.highlight_text(self.recognized_text_target)
-    
-    def update_words_per_minute(self, words_per_minute):
-        assert words_per_minute > 0, "WPM is not working"
-        self.words_per_minute_label.config(text="WPM: {:.2f}".format(words_per_minute))
 
     def highlight_text(self, text_widget):
         # Get the index of the newly inserted text
@@ -104,7 +97,6 @@ class TranslationApp(tk.Frame):
     def on_recognized_updated(self):
         recognized_text_source = self.speechAPI.get_recognized_translations("en")
         recognized_text_target = self.speechAPI.get_recognized_translations("es")
-        words_per_minute = self.speechAPI.get_words_per_minute()
 
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)
@@ -178,10 +170,6 @@ class TranslationApp(tk.Frame):
         self.recognizing_text_target.grid(row=0, column=1, sticky="nsew", padx=padding, pady=padding)
         self.recognized_text_source.grid(row=1, column=0, sticky="nsew", padx=padding, pady=padding)
         self.recognized_text_target.grid(row=1, column=1, sticky="nsew", padx=padding, pady=padding)
-        
-        # Add a label for displaying WPM
-        self.words_per_minute_label = tk.Label(self.frame, text="WPM: 0", font=font)
-        self.words_per_minute_label.grid(row=2, column=0, columnspan=2, pady=10)
 
          # Add a bar at the bottom
         self.bottom_bar = tk.Frame(self)
