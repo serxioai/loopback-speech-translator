@@ -26,9 +26,6 @@ class SpeechAPI:
         
         # Dictionary to hold the result from the recognized events
         self.recognized_buffer = {lang: [] for lang in self.translation_languages}
-
-         # Poll the buffer for calculating words per minute
-        self.start_polling_recognized_buffer_length()
         
         # Storage the recognizing text output 
         self.observable_buffer = {}

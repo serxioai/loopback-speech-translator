@@ -40,7 +40,7 @@ class TranslationApp(tk.Frame):
                                    detectable_languages=detectableLanguages,
                                    end_silence_timeout=endSilenceTimeout)
         
-        self.words_per_minute = utils.WordsPerMinute(self.speechAPI.get_recognized_buffer())
+        self.words_per_minute = WordsPerMinute(self.speechAPI.get_recognized_buffer())
         
         # Connect the buffers holding the event results
         self.speechAPI.set_recognized_callback(self.on_recognized_updated)
