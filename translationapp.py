@@ -101,9 +101,6 @@ class TranslationApp(tk.Frame):
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)
 
-        # Update the UI with words per minute
-        self.update_words_per_minute(words_per_minute)
-
     def on_recognizing_updated(self):
         recognizing_text_source = self.display_source_text(source_language)
         recognizing_text_target = self.display_target_text(target_language)
