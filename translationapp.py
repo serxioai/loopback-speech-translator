@@ -17,7 +17,7 @@ target_language = "es"
 speechRecognitionLanguage = "en-US"
 detectableLanguages = ["en-US","es-MX"]
 font = ("Arial", 22)
-endSilenceTimeout = 5000
+endSilenceTimeout = 1000
 
 class TranslationApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -137,6 +137,12 @@ class TranslationApp(tk.Frame):
                 self.recognizing_text_target.insert(tk.END, translations[i])
                 i += 1
 
+    def on_recognized_slider_change(self, value):
+        self.speechAPI.set_end_silence_timeout(value)
+
+    def trigger_recognized_event(self):
+        self.speechAPI.trigger_recognized_event()
+
     def build_frame(self):
         # Create a frame
         self.frame = tk.Frame(self)
@@ -178,6 +184,15 @@ class TranslationApp(tk.Frame):
 
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_session)
         self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
+
+        self.recognized_slider_label = ttk.Label(self, text="Speech Rate")
+        self.recognized_slider_label.pack(pady=10)
+
+        self.recognized_slider = ttk.Scale(self, from_=0, to=10000, length=200, command=self.on_recognized_slider_change)
+        self.recognized_slider.pack()
+
+        self.recognized_button = tk.Button(self.bottom_bar, text="Trigger", command=self.trigger_recognized_event)
+        self.recognized_button.pack()
     
 if __name__ == "__main__":
     root = tk.Tk()
