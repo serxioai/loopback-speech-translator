@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from speech_api import SpeechAPI
 import time
+from modal_dialog import ModalDialog
 
 # Load the .env file
 load_dotenv()
@@ -17,14 +18,16 @@ target_language = "es"
 speechRecognitionLanguage = "en-US"
 detectableLanguages = ["en-US","es-MX"]
 font = ("Arial", 22)
-endSilenceTimeout = 1000
+endSilenceTimeout = -1
 
 class TranslationApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.speechAPI = None
-        self.words_per_minute = None
+        self.selected_audio_source = None
         self.build_frame()
+        modal = ModalDialog(self)
+        self.wait_window(modal)  # Wait for the modal dialog to close
          
     def start_session(self):
         # Start speech recognition or any other action you want
@@ -37,7 +40,7 @@ class TranslationApp(tk.Frame):
                                    translation_languages=translationLanguages, 
                                    speech_recognition_language=speechRecognitionLanguage, 
                                    detectable_languages=detectableLanguages,
-                                   end_silence_timeout=endSilenceTimeout)
+                                   selected_audio_source=self.selected_audio_source)
         
         # Connect the buffers holding the event results
         self.speechAPI.set_recognized_callback(self.on_recognized_updated)
@@ -185,14 +188,6 @@ class TranslationApp(tk.Frame):
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_session)
         self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
 
-        self.recognized_slider_label = ttk.Label(self, text="Speech Rate")
-        self.recognized_slider_label.pack(pady=10)
-
-        self.recognized_slider = ttk.Scale(self, from_=0, to=10000, length=200, command=self.on_recognized_slider_change)
-        self.recognized_slider.pack()
-
-        self.recognized_button = tk.Button(self.bottom_bar, text="Trigger", command=self.trigger_recognized_event)
-        self.recognized_button.pack()
     
 if __name__ == "__main__":
     root = tk.Tk()
