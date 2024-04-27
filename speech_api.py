@@ -24,7 +24,6 @@ class SpeechAPI:
         self.recognized_callback = None
         self.recognizing_callback = None
         
-
         self.done = False
         
         # Dictionary to hold the result from the recognized events
@@ -56,7 +55,7 @@ class SpeechAPI:
             lambda evt: self.result_callback('RECOGNIZING', evt))
                 
         self.translation_recognizer.session_started.connect(
-            lambda evt: print('SESSION STARTED: {}'.format(evt)))
+            lambda evt: self.result_callback('SESSION STARTED', evt))
 
         self.translation_recognizer.session_stopped.connect(
             lambda evt: print('SESSION STOPPED {}'.format(evt)))
@@ -73,9 +72,17 @@ class SpeechAPI:
     
     def set_recognizing_callback(self, callback):
         self.recognizing_callback = callback
+
+    def set_session_started_callback(self, callback):
+        self.session_started_callback = callback
         
     # Update the buffers with the event type text and notify observers
     def result_callback(self, event_type, evt):
+        
+        if event_type == "SESSION STARTED":
+            print('SESSION STARTED {}'.format(evt))
+            self.session_started_callback()
+
         translations = evt.result.translations
         
         # If translations dictionary is empty, return early
