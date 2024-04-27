@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from speech_api import SpeechAPI
 import time
 from modal_dialog import ModalDialog
+import utils
 
 # Load the .env file
 load_dotenv()
@@ -45,6 +46,7 @@ class TranslationApp(tk.Frame):
         # Connect the buffers holding the event results
         self.speechAPI.set_recognized_callback(self.on_recognized_updated)
         self.speechAPI.set_recognizing_callback(self.on_recognizing_updated)
+        self.speechAPI.set_session_started_callback(self.on_session_started)
         self.speechAPI.configure_session()
         self.speechAPI.translation_recognizer.start_continuous_recognition()
 
@@ -103,6 +105,9 @@ class TranslationApp(tk.Frame):
 
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)
+
+    def on_session_started(self):
+        utils.animate_ellipses()
 
     def on_recognizing_updated(self):
         recognizing_text_source = self.display_source_text(source_language)
