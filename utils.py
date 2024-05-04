@@ -1,4 +1,4 @@
-def animate_ellipses(self):
+def animate_ellipses():
     if self.is_recognizing:
         current_text = self.label_status.cget("text")
         if current_text.endswith("..."):
@@ -8,3 +8,7 @@ def animate_ellipses(self):
 
         self.label_status.config(text=new_text)
         self.after(500, self.animate_ellipses)  # Recursive call after 500ms
+
+
+    def on_session_started(self):
+        animate_ellipses()
