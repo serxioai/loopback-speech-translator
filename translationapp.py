@@ -27,8 +27,6 @@ class TranslationApp(tk.Frame):
         super().__init__(parent, *args, **kwargs)
         self.speechAPI = None
         self.selected_audio_source = None
-        self.recognizing_event_counter = None
-        self.recognizing_event_rate = None
         self.build_frame()
         modal = ModalDialog(self)
         self.wait_window(modal)  # Wait for the modal dialog to close
@@ -51,9 +49,6 @@ class TranslationApp(tk.Frame):
         self.speechAPI.set_recognizing_callback(self.on_recognizing_updated)
         self.speechAPI.configure_session()
         self.speechAPI.translation_recognizer.start_continuous_recognition()
-
-    def set_recognizing_event_rate(self, rate):
-        self.recognizing_event_rate = rate
 
     def clear_screen(self):
         self.recognizing_text_source.delete(1.0, tk.END)
@@ -82,17 +77,10 @@ class TranslationApp(tk.Frame):
 
     # Update the screen with the contents of the observable buffer
     def update_recognizing_texts(self, recognizing_source, recognizing_target):
-        print("RECOGNIZING...")
-        # Increment the event counter with each call
-        self.recognizing_event_counter += 1
-        thread = th.Thread(target=lambda: print(self.recognizing_event_counter))
-        thread.start()
-
-        while self.recognizing_event_rate == 0 or self.recognizing_event_counter % self.recognizing_event_rate == 0:
-            self.recognizing_text_source.delete(1.0, tk.END)
-            self.recognizing_text_source.insert(tk.END, recognizing_source + "\n\n")
-            self.recognizing_text_target.delete(1.0,tk.END)
-            self.recognizing_text_target.insert(tk.END, recognizing_target + "\n\n")
+        self.recognizing_text_source.delete(1.0, tk.END)
+        self.recognizing_text_source.insert(tk.END, recognizing_source + "\n\n")
+        self.recognizing_text_target.delete(1.0,tk.END)
+        self.recognizing_text_target.insert(tk.END, recognizing_target + "\n\n")
 
     def highlight_text(self, text_widget):
         # Get the index of the newly inserted text
@@ -197,10 +185,10 @@ class TranslationApp(tk.Frame):
         self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
 
         # The slider to modify the recognizing event rate
-        self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=100, orient='horizontal', label='Recognizing Event Rate')
+        self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=8, orient='horizontal', label='Recognizing Event Rate')
         self.recognizing_rate_slider.pack(side=tk.LEFT, padx=10, pady=5, fill=tk.X, expand=True)
         self.recognizing_rate_slider.set(0)  # Default position at the middle of the scale
-        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.set_recognizing_event_rate(self.recognizing_rate_slider.get()))
+        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.speechAPI.set_recognizing_event_rate(self.recognizing_rate_slider.get()))
     
 if __name__ == "__main__":
     root = tk.Tk()
