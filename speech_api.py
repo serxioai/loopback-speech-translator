@@ -109,8 +109,7 @@ class SpeechAPI:
 
             # Notify the observer the buffer has been updated
             if self.recognizing_event_rate == 0 or self.recognizing_event_counter % self.recognizing_event_rate == 0:
-                if self.recognizing_callback:
-                    self.recognizing_callback()
+                self.recognizing_callback()
 
         elif event_type == "RECOGNIZED":
 
