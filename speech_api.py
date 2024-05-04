@@ -21,8 +21,11 @@ class SpeechAPI:
         self.audio_config = self.set_audio_config()
         self.auto_detect_source_language_config = self.set_auto_detect_source_language_config()
         self.translation_recognizer = None
+        self.recognizing_event_speed = 0
         self.recognized_callback = None
         self.recognizing_callback = None
+        self.recognizing_event_counter = 0
+        self.recognizing_event_rate = 0
         
         self.done = False
         
@@ -45,6 +48,18 @@ class SpeechAPI:
 
     def trigger_recognized_event(self):
         time.sleep(1)
+    
+    def set_recognizing_event_counter(self, count: int) -> None:
+        self.recognizing_event_counter = count
+
+    def get_recognizing_event_counter(self) -> int:
+        return self.recognizing_event_counter
+
+    def set_recognizing_event_rate(self, rate):    
+        self.recognizing_event_rate = rate
+    
+    def get_recognizing_event_rate(self):
+        return self.recognizing_event_rate
     
     def set_event_callbacks(self):
 
@@ -73,16 +88,12 @@ class SpeechAPI:
     def set_recognizing_callback(self, callback):
         self.recognizing_callback = callback
 
-    def set_session_started_callback(self, callback):
-        self.session_started_callback = callback
+    def set_recognizing_event_counter(self, counter):
+        self.recognizing_evnet_counter = counter
         
     # Update the buffers with the event type text and notify observers
     def result_callback(self, event_type, evt):
         
-        if event_type == "SESSION STARTED":
-            print('SESSION STARTED {}'.format(evt))
-            self.session_started_callback()
-
         translations = evt.result.translations
         
         # If translations dictionary is empty, return early
@@ -91,10 +102,11 @@ class SpeechAPI:
       
         if event_type == "RECOGNIZING":
             
+            # Put the newest translation into the observable buffer
             for lang, text in translations.items():
                 self.update_recognizing_translation(lang, text)        
 
-            # Notify the observer that the buffer is updated
+            # Notify the observer the buffer has been updated
             if self.recognizing_callback:
                 self.recognizing_callback()
 
@@ -119,11 +131,8 @@ class SpeechAPI:
             speech_recognition_language=self.speech_recognition_language,
             target_languages= self.translation_languages)
         
-        # Set the languageIdMode to Continuous for bi-directional language detection
-        speech_translation_config.set_property_by_name(
-            "speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode", 
-            "Continuous"
-        )
+        # Start and stop continuous recognition with Continuous LID
+        speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
 
         return speech_translation_config
 
