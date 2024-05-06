@@ -5,23 +5,28 @@ import time
 import json
 import queue
 import difflib
+import threading
 
 class SpeechAPI:
 
     def __init__(self, subscription_key, service_region, translation_languages, 
-                 speech_recognition_language, detectable_languages, end_silence_timeout):
+                 speech_recognition_language, detectable_languages, selected_audio_source):
         self.subscription_key = subscription_key
         self.service_region = service_region
         self.translation_languages = translation_languages
         self.speech_recognition_language = speech_recognition_language 
         self.detectable_languages = detectable_languages
-        self.end_silence_timeout = end_silence_timeout
+        self.selected_audio_source = selected_audio_source
         self.speech_translation_config = self.set_speech_translation_config()
         self.audio_config = self.set_audio_config()
         self.auto_detect_source_language_config = self.set_auto_detect_source_language_config()
         self.translation_recognizer = None
+        self.recognizing_event_speed = 0
         self.recognized_callback = None
         self.recognizing_callback = None
+        self.recognizing_event_counter = 0
+        self.recognizing_event_rate = 0
+        
         self.done = False
         
         # Dictionary to hold the result from the recognized events
@@ -33,9 +38,6 @@ class SpeechAPI:
 
         # Add a pointer dictionary to track the current item being processed/displayed for each language
         self.current_pointer = {}
-
-        while not done:
-            time.sleep(.5)
         
     def get_recognized_buffer(self):
         return self.recognized_buffer
@@ -44,16 +46,31 @@ class SpeechAPI:
         self.set_translation_recognizer()
         self.set_event_callbacks()
 
+    def trigger_recognized_event(self):
+        time.sleep(1)
+    
+    def set_recognizing_event_counter(self, count: int) -> None:
+        self.recognizing_event_counter = count
+
+    def get_recognizing_event_counter(self) -> int:
+        return self.recognizing_event_counter
+
+    def set_recognizing_event_rate(self, rate):    
+        self.recognizing_event_rate = rate
+    
+    def get_recognizing_event_rate(self):
+        return self.recognizing_event_rate
+    
     def set_event_callbacks(self):
-         # Connect callbacks to the events fired by the speech recognizers
+
         self.translation_recognizer.recognized.connect(
             lambda evt: self.result_callback('RECOGNIZED', evt))
 
         self.translation_recognizer.recognizing.connect(
             lambda evt: self.result_callback('RECOGNIZING', evt))
-        
+                
         self.translation_recognizer.session_started.connect(
-            lambda evt: print('SESSION STARTED: {}'.format(evt)))
+            lambda evt: self.result_callback('SESSION STARTED', evt))
 
         self.translation_recognizer.session_stopped.connect(
             lambda evt: print('SESSION STOPPED {}'.format(evt)))
@@ -61,37 +78,41 @@ class SpeechAPI:
         self.translation_recognizer.canceled.connect(
             lambda evt: print('CANCELED: {} ({})'.format(evt, evt.reason)))
 
-        # stop continuous recognition on either session stopped or canceled events
         self.translation_recognizer.session_stopped.connect(self.stop_cb)
 
         self.translation_recognizer.canceled.connect(self.stop_cb)
-
-    # Method to set the callback
+ 
     def set_recognized_callback(self, callback):
         self.recognized_callback = callback
     
     def set_recognizing_callback(self, callback):
         self.recognizing_callback = callback
 
-    # Update the buffers with the event type text
+    def set_recognizing_event_counter(self, counter):
+        self.recognizing_evnet_counter = counter
+        
+    # Update the buffers with the event type text and notify observers
     def result_callback(self, event_type, evt):
+        
         translations = evt.result.translations
-                
+        
         # If translations dictionary is empty, return early
         if not translations:
             return
       
         if event_type == "RECOGNIZING":
-            
+            self.recognizing_event_counter += 1
+
+            # Put the newest translation into the observable buffer
             for lang, text in translations.items():
                 self.update_recognizing_translation(lang, text)        
 
-            # Notify the observer that the buffer is updated
-            if self.recognizing_callback:
+            # Notify the observer the buffer has been updated
+            if self.recognizing_event_rate == 0 or self.recognizing_event_counter % self.recognizing_event_rate == 0:
                 self.recognizing_callback()
 
         elif event_type == "RECOGNIZED":
-            
+
             for lang, text in translations.items():
                 self.update_recognized_translation(lang, text)
             
@@ -111,23 +132,17 @@ class SpeechAPI:
             speech_recognition_language=self.speech_recognition_language,
             target_languages= self.translation_languages)
         
-        # Set the languageIdMode to Continuous for bi-directional language detection
-        speech_translation_config.set_property_by_name(
-            "speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode", 
-            "Continuous"
-        )
-
-        # Timeout after speech ends
-        speech_translation_config.set_property_by_name(
-            "endSilenceTimeout", 
-            str(self.end_silence_timeout)
-        )
+        # Start and stop continuous recognition with Continuous LID
+        speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
 
         return speech_translation_config
 
     def set_audio_config(self):
-        # audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
-        audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
+        if self.selected_audio_source == "headphones":
+            audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
+        elif self.selected_audio_source == "default":
+            audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
+
         return audio_config
     
     def set_auto_detect_source_language_config(self):
