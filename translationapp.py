@@ -4,7 +4,9 @@ import os
 from dotenv import load_dotenv
 from speech_api import SpeechAPI
 import time
-from utils import WordsPerMinute
+from modal_dialog import ModalDialog
+import utils
+import threading as th
 
 # Load the .env file
 load_dotenv()
@@ -18,14 +20,16 @@ target_language = "es"
 speechRecognitionLanguage = "en-US"
 detectableLanguages = ["en-US","es-MX"]
 font = ("Arial", 22)
-endSilenceTimeout = 5000
+endSilenceTimeout = -1
 
 class TranslationApp(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.speechAPI = None
-        self.words_per_minute = None
+        self.selected_audio_source = None
         self.build_frame()
+        modal = ModalDialog(self)
+        self.wait_window(modal)  # Wait for the modal dialog to close
          
     def start_session(self):
         # Start speech recognition or any other action you want
@@ -38,9 +42,7 @@ class TranslationApp(tk.Frame):
                                    translation_languages=translationLanguages, 
                                    speech_recognition_language=speechRecognitionLanguage, 
                                    detectable_languages=detectableLanguages,
-                                   end_silence_timeout=endSilenceTimeout)
-        
-        self.words_per_minute = WordsPerMinute(self.speechAPI.get_recognized_buffer())
+                                   selected_audio_source=self.selected_audio_source)
         
         # Connect the buffers holding the event results
         self.speechAPI.set_recognized_callback(self.on_recognized_updated)
@@ -61,7 +63,6 @@ class TranslationApp(tk.Frame):
         self.speechAPI.reset_translation_recognizer()
 
     def update_recognized_texts(self, recognized_source, recognized_target):
-
         current_time = time.strftime("%H:%M:%S")  # Get current time
         timestamped_source = f"{current_time} - {recognized_source}"
         timestamped_target = f"{current_time} - {recognized_target}"
@@ -73,10 +74,13 @@ class TranslationApp(tk.Frame):
         # Highlight the newly inserted text
         self.highlight_text(self.recognized_text_source)
         self.highlight_text(self.recognized_text_target)
-    
-    def update_words_per_minute(self, words_per_minute):
-        assert words_per_minute > 0, "WPM is not working"
-        self.words_per_minute_label.config(text="WPM: {:.2f}".format(words_per_minute))
+
+    # Update the screen with the contents of the observable buffer
+    def update_recognizing_texts(self, recognizing_source, recognizing_target):
+        self.recognizing_text_source.delete(1.0, tk.END)
+        self.recognizing_text_source.insert(tk.END, recognizing_source + "\n\n")
+        self.recognizing_text_target.delete(1.0,tk.END)
+        self.recognizing_text_target.insert(tk.END, recognizing_target + "\n\n")
 
     def highlight_text(self, text_widget):
         # Get the index of the newly inserted text
@@ -94,27 +98,17 @@ class TranslationApp(tk.Frame):
         # Remove the highlight from the text
         text_widget.tag_remove("highlight", "1.0", "end")
 
-    def update_recognizing_texts(self, recognizing_source, recognizing_target): 
-        self.recognizing_text_source.delete(1.0, tk.END)
-        self.recognizing_text_source.insert(tk.END, recognizing_source + "\n\n")
-        self.recognizing_text_target.delete(1.0,tk.END)
-        self.recognizing_text_target.insert(tk.END, recognizing_target + "\n\n")
-
     # Callback method for the observer
     def on_recognized_updated(self):
         recognized_text_source = self.speechAPI.get_recognized_translations("en")
         recognized_text_target = self.speechAPI.get_recognized_translations("es")
-        words_per_minute = self.speechAPI.get_words_per_minute()
 
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)
 
-        # Update the UI with words per minute
-        self.update_words_per_minute(words_per_minute)
-
     def on_recognizing_updated(self):
-        recognizing_text_source = self.display_source_text(source_language)
-        recognizing_text_target = self.display_target_text(target_language)
+        self.display_source_text(source_language)
+        self.display_target_text(target_language)
 
     def display_source_text(self, source_language):
         # Clear the text widget
@@ -178,10 +172,6 @@ class TranslationApp(tk.Frame):
         self.recognizing_text_target.grid(row=0, column=1, sticky="nsew", padx=padding, pady=padding)
         self.recognized_text_source.grid(row=1, column=0, sticky="nsew", padx=padding, pady=padding)
         self.recognized_text_target.grid(row=1, column=1, sticky="nsew", padx=padding, pady=padding)
-        
-        # Add a label for displaying WPM
-        self.words_per_minute_label = tk.Label(self.frame, text="WPM: 0", font=font)
-        self.words_per_minute_label.grid(row=2, column=0, columnspan=2, pady=10)
 
          # Add a bar at the bottom
         self.bottom_bar = tk.Frame(self)
@@ -193,6 +183,12 @@ class TranslationApp(tk.Frame):
 
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_session)
         self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
+
+        # The slider to modify the recognizing event rate
+        self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=8, orient='horizontal', label='Recognizing Event Rate')
+        self.recognizing_rate_slider.pack(side=tk.LEFT, padx=10, pady=5, fill=tk.X, expand=True)
+        self.recognizing_rate_slider.set(0)  # Default position at the middle of the scale
+        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.speechAPI.set_recognizing_event_rate(self.recognizing_rate_slider.get()))
     
 if __name__ == "__main__":
     root = tk.Tk()
