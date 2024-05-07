@@ -1,12 +1,12 @@
-# ModalDialog.py
+# new_session_view.py
 
 import tkinter as tk
 from tkinter import ttk
 
-class ModalDialog(tk.Toplevel):
+class NewSessionView(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.title("Select Audio Source")
+        self.title("Configure Speech Session")
         self.geometry("300x300")
         self.transient(parent)
         self.grab_set()
@@ -33,5 +33,3 @@ class ModalDialog(tk.Toplevel):
         # Get the selection
         self.master.selected_audio_source = self.selected_option.get()
         self.destroy()
-
-
