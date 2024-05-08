@@ -14,6 +14,8 @@ class AppController:
 
     def on_new_session_created(self, data):
         print(f"SESSION DATA {data}")
+        session = self.factory.create_session(data)
+        
 
     def end_session(self):
         pass
