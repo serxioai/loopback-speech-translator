@@ -12,5 +12,3 @@ if __name__ == "__main__":
     main_view = SessionsView(root, controller)
     main_view.pack(expand=True, fill=tk.BOTH)
     root.mainloop()
-
-    

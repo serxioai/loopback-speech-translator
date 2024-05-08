@@ -1,6 +1,6 @@
 # app_controller.py
+
 from session_factory import SessionFactory
-from speech_session import AzureSpeechTranslateSession
 from new_session_view import NewSessionView
 
 class AppController:
@@ -8,11 +8,15 @@ class AppController:
         self.root = root
         self.factory = SessionFactory()
        
-    def start_new_session(self) -> NewSessionView:
-        new_session_view = NewSessionView(self.root)
-        new_session_view.grab_set()  
-        new_session_view.wait_window()
+    def launch_new_session_view(self) -> NewSessionView:
+        session_view = NewSessionView(self.root, self.on_new_session_created)
+        session_view.wait_window()
 
-    def create_new_session(self) -> AzureSpeechTranslateSession:
-        new_session = self.factory.create_session()
-        new_session.start()
+    def on_new_session_created(self, data):
+        print(f"SESSION DATA {data}")
+
+    def end_session(self):
+        pass
+
+    def save_session(self):
+        pass

@@ -25,7 +25,7 @@ class SessionsView(tk.Frame):
         self.sessions_list.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 
         # Buttons for actions
-        self.start_new_button = tk.Button(self, text="Start New Session", command=self.controller.start_new_session)
+        self.start_new_button = tk.Button(self, text="Start New Session", command=self.controller.launch_new_session_view)
         self.start_new_button.grid(row=1, column=0, sticky='ew', padx=10)
 
         # Configure grid
