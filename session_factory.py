@@ -15,6 +15,7 @@ class SessionFactory:
         self.sessions[session_id] = new_session
         self.current_session = new_session
         self.current_session.configure()  # Ensure the session is configured
-        self.current_session.start()
         return new_session
     
+    def destroy_session(self):
+        pass
