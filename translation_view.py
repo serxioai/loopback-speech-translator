@@ -1,58 +1,66 @@
+#translation_view.py
+
 import tkinter as tk
+from tkinter import font as tkfont
 
 class TranslationView(tk.Frame):
+    def __init__(self, root, controller):
+        super().__init__(root)
+        self.root = root
+        self.controller = controller
+        self.launch()
         
-    def build_view(self):
+    def launch(self):
             
-            # Define the font
-            font = tkfont.Font(family="Helvetica", size=12)
+        # Define the font
+        font = tkfont.Font(family="Helvetica", size=12)
 
-            # Create a frame
-            self.frame = tk.Frame(self)
-            self.frame.pack(expand=True, fill=tk.BOTH)
+        # Create a frame
+        self.frame = tk.Frame(self)
+        self.frame.pack(expand=True, fill=tk.BOTH)
 
-            # Configure the grid weights for the frame
-            self.frame.grid_rowconfigure(0, weight=1)  # Top row
-            self.frame.grid_rowconfigure(1, weight=5)  # Bottom row
-            self.frame.grid_columnconfigure(0, weight=1)  # Left column
-            self.frame.grid_columnconfigure(1, weight=1)  # Right column
+        # Configure the grid weights for the frame
+        self.frame.grid_rowconfigure(0, weight=1)  # Top row
+        self.frame.grid_rowconfigure(1, weight=5)  # Bottom row
+        self.frame.grid_columnconfigure(0, weight=1)  # Left column
+        self.frame.grid_columnconfigure(1, weight=1)  # Right column
 
-            # Setup the viewing windows for recognized and recognizing events
-            self.recognizing_text_source = tk.Text(self.frame, bg="white", font=font, height=1)
-            self.recognized_text_source = tk.Text(self.frame, bg="white", font=font, height=5)
-            
-            self.recognizing_text_target = tk.Text(self.frame, bg="white", font=font, height=1)
-            self.recognized_text_target = tk.Text(self.frame, bg="white", font=font, height=5)
+        # Setup the viewing windows for recognized and recognizing events
+        self.recognizing_text_source = tk.Text(self.frame, bg="white", font=font, height=1)
+        self.recognized_text_source = tk.Text(self.frame, bg="white", font=font, height=5)
+        
+        self.recognizing_text_target = tk.Text(self.frame, bg="white", font=font, height=1)
+        self.recognized_text_target = tk.Text(self.frame, bg="white", font=font, height=5)
 
-            self.recognizing_text_source = tk.Text(self.frame, bg="white", font=font, height=1)    
-            self.recognized_text_source = tk.Text(self.frame, bg="white", font=font, height=5)
-            
-            self.recognizing_text_target = tk.Text(self.frame, bg="white",font=font, height=1)
-            self.recognized_text_target = tk.Text(self.frame, bg="white", font=font, height=5) 
+        self.recognizing_text_source = tk.Text(self.frame, bg="white", font=font, height=1)    
+        self.recognized_text_source = tk.Text(self.frame, bg="white", font=font, height=5)
+        
+        self.recognizing_text_target = tk.Text(self.frame, bg="white",font=font, height=1)
+        self.recognized_text_target = tk.Text(self.frame, bg="white", font=font, height=5) 
 
-            # Place the cells on the grid with padding
-            padding = 1  # You can adjust this value as needed
-            self.recognizing_text_source.grid(row=0, column=0, sticky="nsew", padx=padding, pady=padding)
-            self.recognizing_text_target.grid(row=0, column=1, sticky="nsew", padx=padding, pady=padding)
-            self.recognized_text_source.grid(row=1, column=0, sticky="nsew", padx=padding, pady=padding)
-            self.recognized_text_target.grid(row=1, column=1, sticky="nsew", padx=padding, pady=padding)
+        # Place the cells on the grid with padding
+        padding = 1  # You can adjust this value as needed
+        self.recognizing_text_source.grid(row=0, column=0, sticky="nsew", padx=padding, pady=padding)
+        self.recognizing_text_target.grid(row=0, column=1, sticky="nsew", padx=padding, pady=padding)
+        self.recognized_text_source.grid(row=1, column=0, sticky="nsew", padx=padding, pady=padding)
+        self.recognized_text_target.grid(row=1, column=1, sticky="nsew", padx=padding, pady=padding)
 
-            # Add a bar at the bottom
-            self.bottom_bar = tk.Frame(self)
-            self.bottom_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        # Add a bar at the bottom
+        self.bottom_bar = tk.Frame(self)
+        self.bottom_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-            # Add "Start" and "Stop" buttons to the bottom bar
-            self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_session)
-            self.start_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
+        # Add "Start" and "Stop" buttons to the bottom bar
+        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_session)
+        self.start_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
 
-            self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_session)
-            self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
+        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_session)
+        self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
 
-            # The slider to modify the recognizing event rate
-            self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=8, orient='horizontal', label='Recognizing Event Rate')
-            self.recognizing_rate_slider.pack(side=tk.LEFT, padx=10, pady=5, fill=tk.X, expand=True)
-            self.recognizing_rate_slider.set(0)  # Default position at the middle of the scale
-            self.recognizing_rate_slider.bind("<Motion>", lambda event: self.speechAPI.set_recognizing_event_rate(self.recognizing_rate_slider.get()))
+        # The slider to modify the recognizing event rate
+        self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=8, orient='horizontal', label='Recognizing Event Rate')
+        self.recognizing_rate_slider.pack(side=tk.LEFT, padx=10, pady=5, fill=tk.X, expand=True)
+        self.recognizing_rate_slider.set(0)  # Default position at the middle of the scale
+        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.speechAPI.set_recognizing_event_rate(self.recognizing_rate_slider.get()))
 
     def start_session(self):
          pass

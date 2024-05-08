@@ -5,7 +5,6 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
 from translation_view import TranslationView
-from app_controller import AppController
 
 class SessionsView(tk.Frame):
     def __init__(self, root, controller):
