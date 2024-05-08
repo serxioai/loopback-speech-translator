@@ -11,7 +11,7 @@ class SessionFactory:
             self.current_session.stop()
             self.current_session.save_translations()
         session_id = str(uuid.uuid4())
-        new_session = AzureSpeechTranslateSession(session_id, config)
+        new_session = AzureSpeechTranslateSession(config)
         self.sessions[session_id] = new_session
         self.current_session = new_session
         self.current_session.configure()  # Ensure the session is configured

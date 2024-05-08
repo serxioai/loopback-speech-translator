@@ -12,17 +12,13 @@ SUBSCRIPTION_KEY = os.environ.get("SPEECH_KEY")
 SERVICE_REGION = os.environ.get("SPEECH_REGION")
 
 class AzureSpeechTranslateSession:
-
-    subscription_key = SUBSCRIPTION_KEY
-    service_region = SERVICE_REGION
     
-    def __init__(self,  translation_languages, 
-                 speech_recognition_language, detectable_languages, selected_audio_source):
-        
-        self.translation_languages = translation_languages
-        self.speech_recognition_language = speech_recognition_language 
-        self.detectable_languages = detectable_languages
-        self.selected_audio_source = selected_audio_source
+    def __init__(self, config_data):
+        print(config_data)
+        self.translation_languages = config_data['translation_languages']
+        self.speech_recognition_language = 'en' 
+        self.detectable_languages = ['en-US', 'es-MX']
+        self.selected_audio_source = config_data['audio_source']
         self.speech_translation_config = None
         self.audio_config = None
         self.auto_detect_source_language_config = None
@@ -32,7 +28,7 @@ class AzureSpeechTranslateSession:
         self.recognizing_callback = None
         self.recognizing_event_counter = 0
         self.recognizing_event_rate = 0
-    
+
         # Dictionary to hold the result from the recognized events
         self.recognized_buffer = {lang: [] for lang in self.translation_languages}
         
@@ -50,12 +46,31 @@ class AzureSpeechTranslateSession:
         return self.recognized_buffer
     
     def configure(self):
-        self.speech_translation_config = self.set_speech_translation_config()
-        self.audio_config = self.set_audio_config()
-        self.auto_detect_source_language_config = self.set_auto_detect_source_language_config()
-        self.set_translation_recognizer()
+        self.speech_translation_config = self.init_speech_translation_config()
+        self.audio_config = self.set_audio_source()
+        self.auto_detect_source_language_config = self.config_auto_detect_source_language()
+        self.translation_recognizer = self.init_translation_recognizer()
         self.set_event_callbacks()
 
+    def init_speech_translation_config(self):
+        speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
+            subscription=SUBSCRIPTION_KEY,
+            region=SERVICE_REGION,
+            speech_recognition_language=self.speech_recognition_language,
+            target_languages= self.translation_languages)
+        
+        # Start and stop continuous recognition with Continuous LID
+        speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
+
+        return speech_translation_config
+    
+    def init_translation_recognizer(self) -> speechsdk.translation.TranslationRecognizer:
+        translation_recognizer = speechsdk.translation.TranslationRecognizer(
+            translation_config=self.speech_translation_config,
+            audio_config=self.audio_config,
+            auto_detect_source_language_config=self.auto_detect_source_language_config)
+        return translation_recognizer
+        
     def trigger_recognized_event(self):
         time.sleep(1)
     
@@ -132,21 +147,6 @@ class AzureSpeechTranslateSession:
     def get_translation_recognizer(self):
         return self.translation_recognizer
 
-    # https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-identification?tabs=once&pivots=programming-language-python
-    def set_speech_translation_config(self):
-   
-        # Fills the constructor for a translator recognizer with given settings
-        speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
-            subscription=self.subscription_key,
-            region=self.service_region,
-            speech_recognition_language=self.speech_recognition_language,
-            target_languages= self.translation_languages)
-        
-        # Start and stop continuous recognition with Continuous LID
-        speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
-
-        return speech_translation_config
-
     def set_audio_source(self):
         if self.selected_audio_source == "headphones":
             audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
@@ -155,15 +155,9 @@ class AzureSpeechTranslateSession:
 
         return audio_config
     
-    def config_auto_detect_source_language_config(self):
+    def config_auto_detect_source_language(self):
         auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
         return auto_detect_source_language_config
-
-    def config_translation_recognizer(self):
-        self.translation_recognizer = speechsdk.translation.TranslationRecognizer(
-            translation_config=self.speech_translation_config,
-            audio_config=self.audio_config,
-            auto_detect_source_language_config=self.auto_detect_source_language_config)
 
     def reset_translation_recognizer(self):
         self.translation_recognizer = None

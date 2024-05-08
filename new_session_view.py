@@ -5,12 +5,12 @@ from tkinter import ttk
 from tkinter import messagebox
 
 class NewSessionView(tk.Toplevel):
-    def __init__(self, parent, on_created_callback):
+    def __init__(self, parent, on_init_session_callback):
         super().__init__(parent)
         self.title("Configure Speech Session")
         self.geometry("300x300")
         self.transient(parent)
-        self.on_created_callback = on_created_callback # Connect to the controller
+        self.on_init_session_callback = on_init_session_callback # Connect to the controller
         self.session_config_data = {}
 
         self.grab_set()
@@ -58,11 +58,25 @@ class NewSessionView(tk.Toplevel):
             messagebox.showerror("Language Selection Error", "Please select valid languages from the list.")
             return  # Stop processing and allow user to correct the input
         
-        self.process_and_close()
+        self.process_and_close(source_lang, target_lang)
 
-    def process_and_close(self):    
+    def process_and_close(self, source_lang, target_lang):
+        language_options = {
+            'English': 'en',
+            'Spanish': 'es',
+            'French': 'fr',
+            'German': 'de'
+        }
+
         self.session_config_data['audio_source'] = self.audio_source_option.get()
-        self.session_config_data['source_language'] = self.source_language_option.get()
-        self.session_config_data['target_language'] = self.target_language_option.get()
-        self.on_created_callback(self.session_config_data)
-        self.destroy()
+        self.session_config_data['translation_languages'] = [language_options[source_lang], language_options[target_lang]]
+
+        try:
+            self.on_init_session_callback(self.session_config_data)
+            print("Callback executed successfully.")
+        except Exception as e:
+            print("Error in executing callback:", e)
+        finally:
+            self.destroy()
+    
+
