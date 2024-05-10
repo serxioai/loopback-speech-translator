@@ -19,7 +19,7 @@ class WordsPerMinute:
     def poll_recognized_buffer_length(self):
         while True:
             # recognized_text_length = {lang: len(buffer) for lang, buffer in self.recognized_buffer.items()}
-            source_temp_buffer = self.recognized_buffer[self.translation_languages[0]]
+            source_temp_buffer = self.recognized_buffer[self.target_languages[0]]
             # print(source_temp_buffer)
             # print(f"total words: {total_words}")
             time.sleep(10)
