@@ -22,9 +22,10 @@ class TranslationView(tk.Frame):
     def launch(self):
 
         self.session.set_recognizing_callback(self.on_recognizing_updated)
+        self.session.set_recognized_callback(self.on_recognized_updated)
 
         # Define the font
-        font = tkfont.Font(family="Helvetica", size=12)
+        font = tkfont.Font(family="Helvetica", size=15)
 
         # Create a frame
         self.frame = tk.Frame(self)
@@ -32,7 +33,7 @@ class TranslationView(tk.Frame):
 
         # Configure the grid weights for the frame
         self.frame.grid_rowconfigure(0, weight=1)  # Top row
-        self.frame.grid_rowconfigure(1, weight=5)  # Bottom row
+        self.frame.grid_rowconfigure(1, weight=1)  # Bottom row
         self.frame.grid_columnconfigure(0, weight=1)  # Left column
         self.frame.grid_columnconfigure(1, weight=1)  # Right column
 
@@ -42,12 +43,6 @@ class TranslationView(tk.Frame):
         
         self.recognizing_text_target = tk.Text(self.frame, bg="white", font=font, height=1)
         self.recognized_text_target = tk.Text(self.frame, bg="white", font=font, height=5)
-
-        self.recognizing_text_source = tk.Text(self.frame, bg="white", font=font, height=1)    
-        self.recognized_text_source = tk.Text(self.frame, bg="white", font=font, height=5)
-        
-        self.recognizing_text_target = tk.Text(self.frame, bg="white",font=font, height=1)
-        self.recognized_text_target = tk.Text(self.frame, bg="white", font=font, height=5) 
 
         # Place the cells on the grid with padding
         padding = 1  # You can adjust this value as needed
@@ -123,8 +118,11 @@ class TranslationView(tk.Frame):
 
     # Callback method for the observer
     def on_recognized_updated(self):
-        recognized_text_source = self.session.get_recognized_translations("en")
-        recognized_text_target = self.session.get_recognized_translations("es")
+        for index, lang in enumerate(self.session.target_languages):
+            if index == 0:    
+                recognized_text_source = self.session.get_recognized_translations(lang)
+            if index == 1:
+                recognized_text_target = self.session.get_recognized_translations(lang)
 
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)
@@ -134,9 +132,9 @@ class TranslationView(tk.Frame):
         for index, language_code in enumerate(self.session.target_languages):
             # Call display_text with the current language code
             if index == 0:
-                self.display_recognizing_text('en', self.recognizing_text_source)
+                self.display_recognizing_text(language_code, self.recognizing_text_source)
             if index == 1:
-                self.display_recognizing_text('es', self.recognizing_text_target)
+                self.display_recognizing_text(language_code, self.recognizing_text_target)
 
     def display_recognizing_text(self, language, text_widget):
         # Clear the text widget

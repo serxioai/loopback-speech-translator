@@ -178,8 +178,6 @@ class AzureSpeechTranslateSession:
 
             for lang, text in translations.items():
                 self.update_recognized_translation(lang, text)
-            
-            if self.recognized_callback:
                 self.recognized_callback()
 
     def get_translation_recognizer(self):
