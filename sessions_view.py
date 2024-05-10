@@ -33,12 +33,19 @@ class SessionsView(tk.Frame):
 
        
         self.pack(expand=True, fill=tk.BOTH)  # Pack the app within the root window
-        self.root.mainloop()
+        self.load_sessions()
 
-    def load_sessions(self):
-        # Placeholder: Load sessions from model
-        pass
 
     def start_new_session(self):
         # Placeholder: Logic to start a new session
         pass    
+
+    def load_sessions(self):
+        # Simulated data
+        sessions = [
+            {"id": "1", "date": "2024-05-10", "duration": "30 mins", "source_lang": "EN", "target_lang": "ES"},
+            {"id": "2", "date": "2024-05-11", "duration": "45 mins", "source_lang": "EN", "target_lang": "FR"}
+        ]
+        for session in sessions:
+            self.sessions_list.insert("", 'end', id=session["id"], text=session["id"],
+                                    values=(session["date"], session["duration"], session["source_lang"], session["target_lang"]))
