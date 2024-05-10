@@ -5,12 +5,12 @@ from tkinter import ttk
 from tkinter import messagebox
 
 class NewSessionView(tk.Toplevel):
-    def __init__(self, parent, on_init_session_callback):
+    def __init__(self, parent, on_init_new_session_callback):
         super().__init__(parent)
         self.title("Configure Speech Session")
         self.geometry("300x300")
         self.transient(parent)
-        self.on_init_session_callback = on_init_session_callback # Connect to the controller
+        self.on_init_new_session_callback = on_init_new_session_callback # Connect to the controller
         self.session_config_data = {}
 
         self.grab_set()
@@ -68,11 +68,12 @@ class NewSessionView(tk.Toplevel):
             'German': 'de'
         }
 
+        # Format and store the config data for the session
         self.session_config_data['audio_source'] = self.audio_source_option.get()
-        self.session_config_data['translation_languages'] = [language_options[source_lang], language_options[target_lang]]
+        self.session_config_data['target_languages'] = [language_options[source_lang], language_options[target_lang]]
 
         try:
-            self.on_init_session_callback(self.session_config_data)
+            self.on_init_new_session_callback(self.session_config_data)
             print("Callback executed successfully.")
         except Exception as e:
             print("Error in executing callback:", e)

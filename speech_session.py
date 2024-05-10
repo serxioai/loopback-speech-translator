@@ -13,16 +13,22 @@ SERVICE_REGION = os.environ.get("SPEECH_REGION")
 
 class AzureSpeechTranslateSession:
     
-    def __init__(self, config_data):
-        print(config_data)
-        self.translation_languages = config_data['translation_languages']
-        self.speech_recognition_language = 'en' 
-        self.detectable_languages = ['en-US', 'es-MX']
+    def __init__(self, session_id, config_data):
+        self.session_id = session_id
+
+        # Config data
+        self.target_languages = config_data['target_languages']
+        self.speech_recognition_language = "en-US" 
+        self.detectable_languages = ["en-US", "es-MX"]
         self.selected_audio_source = config_data['audio_source']
+
+        # Config setup
         self.speech_translation_config = None
         self.audio_config = None
         self.auto_detect_source_language_config = None
         self.translation_recognizer = None
+
+        # Callbacks
         self.recognizing_event_speed = 0
         self.recognized_callback = None
         self.recognizing_callback = None
@@ -30,7 +36,7 @@ class AzureSpeechTranslateSession:
         self.recognizing_event_rate = 0
 
         # Dictionary to hold the result from the recognized events
-        self.recognized_buffer = {lang: [] for lang in self.translation_languages}
+        self.recognized_buffer = {lang: [] for lang in self.target_languages}
         
         # Storage the recognizing text output 
         self.observable_buffer = {}
@@ -40,7 +46,16 @@ class AzureSpeechTranslateSession:
         self.current_pointer = {}
         
     def start(self):
-        self.speech_translation_config.start_continuous_translation()
+        if not self.translation_recognizer:
+            raise ValueError("Translation recognizer is not initialized.")
+        try:
+            print(f"SESSION {self.session_id} STARTING...")
+            self.translation_recognizer.start_continuous_recognition()
+        except Exception as e:
+            print("Failed to start recognition:", str(e))
+
+    def stop(self):
+        self.translation_recognizer.stop_continuous_recognition()
 
     def get_recognized_buffer(self):
         return self.recognized_buffer
@@ -52,17 +67,31 @@ class AzureSpeechTranslateSession:
         self.translation_recognizer = self.init_translation_recognizer()
         self.set_event_callbacks()
 
+    # Step 1
     def init_speech_translation_config(self):
         speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
             subscription=SUBSCRIPTION_KEY,
             region=SERVICE_REGION,
-            speech_recognition_language=self.speech_recognition_language,
-            target_languages= self.translation_languages)
+            speech_recognition_language= self.speech_recognition_language,
+            target_languages= self.target_languages
+            )
         
         # Start and stop continuous recognition with Continuous LID
         speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
 
         return speech_translation_config
+    
+    def set_audio_source(self):
+        if self.selected_audio_source == "headphones":
+            audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
+        elif self.selected_audio_source == "default":
+            audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
+
+        return audio_config
+    
+    def config_auto_detect_source_language(self):
+        auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
+        return auto_detect_source_language_config
     
     def init_translation_recognizer(self) -> speechsdk.translation.TranslationRecognizer:
         translation_recognizer = speechsdk.translation.TranslationRecognizer(
@@ -79,6 +108,15 @@ class AzureSpeechTranslateSession:
 
     def get_recognizing_event_counter(self) -> int:
         return self.recognizing_event_counter
+    
+    def get_session_id(self) -> str:
+        return self.get_session_id
+    
+    def get_speech_recognition_language(self) -> str:
+        return self.speech_recognition_language
+    
+    def get_target_languages(self) -> tuple[str, str]:
+        return self.target_languages
 
     def set_recognizing_event_rate(self, rate):    
         self.recognizing_event_rate = rate
@@ -120,7 +158,7 @@ class AzureSpeechTranslateSession:
     def result_callback(self, event_type, evt):
         
         translations = evt.result.translations
-        
+
         # If translations dictionary is empty, return early
         if not translations:
             return
@@ -147,36 +185,19 @@ class AzureSpeechTranslateSession:
     def get_translation_recognizer(self):
         return self.translation_recognizer
 
-    def set_audio_source(self):
-        if self.selected_audio_source == "headphones":
-            audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
-        elif self.selected_audio_source == "default":
-            audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
-
-        return audio_config
-    
-    def config_auto_detect_source_language(self):
-        auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
-        return auto_detect_source_language_config
-
     def reset_translation_recognizer(self):
         self.translation_recognizer = None
 
     def stop_cb(evt):
-        """callback that signals to stop continuous recognition upon receiving an event `evt`"""
         print('CLOSING on {}'.format(evt))
-        #nonlocal done
         done = True
     
-    def start(self):
-        self.translation_recognizer.start_continuous_recognition()
-
     # This is a final rendering
     def update_recognized_translation(self, language, translation):
         if language in self.recognized_buffer:
             self.recognized_buffer[language].append(translation)
 
-    # This is a partial rendering of the time series 
+    # Fill the buffer with the translations
     def update_recognizing_translation(self, language_code, current_transcription):
         
         # Check if language_code exists in the buffers
@@ -236,7 +257,7 @@ class AzureSpeechTranslateSession:
             if language in self.buffers:
                 self.recognized_buffer[language] = [translation]
 
-    def save_translations():
+    def save_translations(self):
         pass
 
 

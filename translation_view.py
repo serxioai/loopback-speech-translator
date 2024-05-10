@@ -2,16 +2,27 @@
 
 import tkinter as tk
 from tkinter import font as tkfont
+import time
 
 class TranslationView(tk.Frame):
-    def __init__(self, root, controller):
+    def __init__(self, session, root, 
+                 on_start_speech_session_callback,
+                 on_stop_speech_session_callback,
+                 on_change_recognizing_event_rate_callback, 
+                 ):
         super().__init__(root)
+        self.session = session
         self.root = root
-        self.controller = controller
+        self.on_change_recognizing_event_rate_callback = on_change_recognizing_event_rate_callback
+        self.on_start_speech_session_callback = on_start_speech_session_callback
+        self.on_stop_speech_session_callback = on_stop_speech_session_callback
+        self.pack(expand=True, fill=tk.BOTH)
         self.launch()
         
     def launch(self):
-            
+
+        self.session.set_recognizing_callback(self.on_recognizing_updated)
+
         # Define the font
         font = tkfont.Font(family="Helvetica", size=12)
 
@@ -50,17 +61,17 @@ class TranslationView(tk.Frame):
         self.bottom_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         # Add "Start" and "Stop" buttons to the bottom bar
-        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_session)
+        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.on_start_speech_session_callback)
         self.start_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
 
-        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_session)
+        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_speech_session_callback)
         self.stop_button.pack(side=tk.LEFT, padx=10, pady=5, expand=True)
 
         # The slider to modify the recognizing event rate
         self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=8, orient='horizontal', label='Recognizing Event Rate')
         self.recognizing_rate_slider.pack(side=tk.LEFT, padx=10, pady=5, fill=tk.X, expand=True)
         self.recognizing_rate_slider.set(0)  # Default position at the middle of the scale
-        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.speechAPI.set_recognizing_event_rate(self.recognizing_rate_slider.get()))
+        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.on_change_recognizing_event_rate_callback(self.recognizing_rate_slider.get()))
 
     def start_session(self):
          pass
@@ -73,12 +84,6 @@ class TranslationView(tk.Frame):
         self.recognizing_text_target.delete(1.0, tk.END)
         self.recognized_text_source.delete(1.0, tk.END)
         self.recognized_text_target.delete(1.0, tk.END)
-
-    def stop_session(self):
-        # Stop speech recognition or any other action you want
-        print("Stopping session...")
-        self.speechAPI.translation_recognizer.stop_continuous_recognition()
-        self.speechAPI.reset_translation_recognizer()
 
     def update_recognized_texts(self, recognized_source, recognized_target):
         current_time = time.strftime("%H:%M:%S")  # Get current time
@@ -118,44 +123,39 @@ class TranslationView(tk.Frame):
 
     # Callback method for the observer
     def on_recognized_updated(self):
-        recognized_text_source = self.speechAPI.get_recognized_translations("en")
-        recognized_text_target = self.speechAPI.get_recognized_translations("es")
+        recognized_text_source = self.session.get_recognized_translations("en")
+        recognized_text_target = self.session.get_recognized_translations("es")
 
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)
 
     def on_recognizing_updated(self):
-        self.display_source_text(source_language)
-        self.display_target_text(target_language)
+        # Iterate through each language code in the list
+        for index, language_code in enumerate(self.session.target_languages):
+            # Call display_text with the current language code
+            if index == 0:
+                self.display_recognizing_text('en', self.recognizing_text_source)
+            if index == 1:
+                self.display_recognizing_text('es', self.recognizing_text_target)
 
-    def display_source_text(self, source_language):
+    def display_recognizing_text(self, language, text_widget):
         # Clear the text widget
-        self.recognizing_text_source.delete(1.0, tk.END)
+        text_widget.delete(1.0, tk.END)
 
-        translations = self.speechAPI.get_next_transcription(source_language)
+        # Fetch translations for the given language
+        translations = self.session.get_next_transcription(language)
         i = 0
         while i < len(translations):
-            if translations[i] == '+' and i < len(translations) - 1: 
-                self.recognizing_text_source.insert(tk.END, translations[i + 1])
-                # Highlight the char
-                self.recognizing_text_source.tag_add("highlight", f"{tk.END} - 2c", tk.END)
-                i += 2  # Skip the next char, as we've already added it
+            if translations[i] == '+' and i < len(translations) - 1:
+                # Insert the next character after '+'
+                text_widget.insert(tk.END, translations[i + 1])
+                # Highlight the character
+                text_widget.tag_add("highlight", f"{tk.END} - 2c", tk.END)
+                i += 2  # Move past the '+' and the character
             else:
-                self.recognizing_text_source.insert(tk.END, translations[i])
+                # Insert other characters normally
+                text_widget.insert(tk.END, translations[i])
                 i += 1
-    
-    def display_target_text(self, target_language):
-         # Clear the text widget
-        self.recognizing_text_target.delete(1.0, tk.END)
 
-        translations = self.speechAPI.get_next_transcription(target_language)
-        i = 0
-        while i < len(translations):
-            if translations[i] == '+' and i < len(translations) - 1: 
-                self.recognizing_text_target.insert(tk.END, translations[i + 1])
-                # Highlight the char
-                self.recognizing_text_target.tag_add("highlight", f"{tk.END} - 2c", tk.END)
-                i += 2  # Skip the next char, as we've already added it
-            else:
-                self.recognizing_text_target.insert(tk.END, translations[i])
-                i += 1
+        # Highlight text setup (if not already configured elsewhere)
+        text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
