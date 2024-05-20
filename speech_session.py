@@ -16,21 +16,13 @@ class AzureSpeechTranslateSession:
     def __init__(self, session_id, config_data):
         self.session_id = session_id
         self.detected_language = None
-       
-        print(config_data)
 
         # Config data
         self.target_languages = [lang for lang in config_data['languages'].values()]
-        #self.target_languages = config_data['languages']['output']
         self.input_language = config_data['languages']['input']
         self.speech_recognition_language = config_data['speech_rec_lang'] 
         self.detectable_languages = config_data['detectable_lang']
         self.selected_audio_source = config_data['audio_source']
-
-        print('AUDIO SOURCE',self.selected_audio_source)
-        print(self.target_languages)
-        print(self.input_language)
-        print(self.detectable_languages)
 
         # Config setup
         self.speech_translation_config = None
