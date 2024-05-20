@@ -6,7 +6,7 @@ class SessionFactory:
         self.current_session = None
         self.sessions = {}
     
-    def create_session(self, config) -> AzureSpeechTranslateSession:
+    def init_session(self, config) -> AzureSpeechTranslateSession:
         if self.current_session is not None:
             self.current_session.stop()
             self.current_session.save_translations()
@@ -14,7 +14,6 @@ class SessionFactory:
         new_session = AzureSpeechTranslateSession(session_id, config)
         self.sessions[session_id] = new_session
         self.current_session = new_session
-        self.current_session.configure()  # Ensure the session is configured
         return new_session
     
     def destroy_session(self):

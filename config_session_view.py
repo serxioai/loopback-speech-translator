@@ -4,17 +4,19 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
-class NewSessionView(tk.Toplevel):
-    def __init__(self, parent, on_init_new_session_callback):
+class ConfigSessionView(tk.Toplevel):
+    def __init__(self, parent, on_start_session):
+        self.on_start_session = on_start_session # Connect to the controller
         super().__init__(parent)
         self.title("Configure Speech Session")
         self.geometry("300x300")
         self.transient(parent)
-        self.on_init_new_session_callback = on_init_new_session_callback # Connect to the controller
         self.session_config_data = {}
 
         self.grab_set()
+        self.build_ui()
 
+    def build_ui(self):
         # Create a variable to store the selection
         self.audio_source_option = tk.StringVar(value="default")
         self.source_language_option = tk.StringVar()
@@ -24,7 +26,7 @@ class NewSessionView(tk.Toplevel):
         self.radio_headphones = ttk.Radiobutton(self, text="Headphones", value="headphones",
                                                 variable=self.audio_source_option)
         self.radio_default_mic = ttk.Radiobutton(self, text="Default Mic", value="default",
-                                                 variable=self.audio_source_option)
+                                                variable=self.audio_source_option)
         self.radio_headphones.pack()
         self.radio_default_mic.pack()
 
@@ -73,7 +75,7 @@ class NewSessionView(tk.Toplevel):
         self.session_config_data['target_languages'] = [language_options[source_lang], language_options[target_lang]]
 
         try:
-            self.on_init_new_session_callback(self.session_config_data)
+            self.on_start_session(self.session_config_data)
             print("Callback executed successfully.")
         except Exception as e:
             print("Error in executing callback:", e)

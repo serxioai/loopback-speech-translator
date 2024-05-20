@@ -15,9 +15,12 @@ class AzureSpeechTranslateSession:
     
     def __init__(self, session_id, config_data):
         self.session_id = session_id
-
+        self.detected_language = None
+       
         # Config data
         self.target_languages = config_data['target_languages']
+        self.input_language = config_data['target_languages'][0]
+        self.output_language = config_data['target_languages'][1] # This can be a list of languages
         self.speech_recognition_language = "en-US" 
         self.detectable_languages = ["en-US", "es-MX"]
         self.selected_audio_source = config_data['audio_source']
@@ -34,6 +37,7 @@ class AzureSpeechTranslateSession:
         self.recognizing_callback = None
         self.recognizing_event_counter = 0
         self.recognizing_event_rate = 0
+        self.configure()
 
         # Dictionary to hold the result from the recognized events
         self.recognized_buffer = {lang: [] for lang in self.target_languages}
@@ -44,7 +48,7 @@ class AzureSpeechTranslateSession:
 
         # Add a pointer dictionary to track the current item being processed/displayed for each language
         self.current_pointer = {}
-        
+    
     def start(self):
         if not self.translation_recognizer:
             raise ValueError("Translation recognizer is not initialized.")
@@ -63,11 +67,12 @@ class AzureSpeechTranslateSession:
     def configure(self):
         self.speech_translation_config = self.init_speech_translation_config()
         self.audio_config = self.set_audio_source()
-        self.auto_detect_source_language_config = self.config_auto_detect_source_language()
+        self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
+        #print("Detectable languages set in AutoDetectSourceLanguageConfig:")
+        #print(self.auto_detect_source_language_config.language)
         self.translation_recognizer = self.init_translation_recognizer()
         self.set_event_callbacks()
 
-    # Step 1
     def init_speech_translation_config(self):
         speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
             subscription=SUBSCRIPTION_KEY,
@@ -88,20 +93,13 @@ class AzureSpeechTranslateSession:
             audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
 
         return audio_config
-    
-    def config_auto_detect_source_language(self):
-        auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
-        return auto_detect_source_language_config
-    
+        
     def init_translation_recognizer(self) -> speechsdk.translation.TranslationRecognizer:
         translation_recognizer = speechsdk.translation.TranslationRecognizer(
             translation_config=self.speech_translation_config,
             audio_config=self.audio_config,
             auto_detect_source_language_config=self.auto_detect_source_language_config)
         return translation_recognizer
-        
-    def trigger_recognized_event(self):
-        time.sleep(1)
     
     def set_recognizing_event_counter(self, count: int) -> None:
         self.recognizing_event_counter = count
@@ -125,7 +123,7 @@ class AzureSpeechTranslateSession:
         return self.recognizing_event_rate
     
     def set_event_callbacks(self):
-
+        
         self.translation_recognizer.recognized.connect(
             lambda evt: self.result_callback('RECOGNIZED', evt))
 
@@ -153,11 +151,28 @@ class AzureSpeechTranslateSession:
 
     def set_recognizing_event_counter(self, counter):
         self.recognizing_evnet_counter = counter
+
+    def detect_language(self, evt):
+
+        result = evt.result 
+        print("Properties available:", result.properties.get(speechsdk.PropertyId.SpeechServiceConnection_AutoDetectSourceLanguageResult)) 
+
+        # Check if the result has the property for auto-detected language
+        if result.properties.get(speechsdk.PropertyId.SpeechServiceConnection_AutoDetectSourceLanguageResult):
+            detected_language_json = result.properties[speechsdk.PropertyId.SpeechServiceConnection_AutoDetectSourceLanguageResult]
+            detected_language = speechsdk.AutoDetectSourceLanguageResult(detected_language_json).language
+            print(f"Detected Language: {detected_language}")
+        else:
+            print("No language detected.")
         
+
     # Update the buffers with the event type text and notify observers
     def result_callback(self, event_type, evt):
+
+        # TODO: implement language detection
         
         translations = evt.result.translations
+        print(translations)
 
         # If translations dictionary is empty, return early
         if not translations:
@@ -165,7 +180,6 @@ class AzureSpeechTranslateSession:
       
         if event_type == "RECOGNIZING":
             self.recognizing_event_counter += 1
-
             # Put the newest translation into the observable buffer
             for lang, text in translations.items():
                 self.update_recognizing_translation(lang, text)        
@@ -175,7 +189,6 @@ class AzureSpeechTranslateSession:
                 self.recognizing_callback()
 
         elif event_type == "RECOGNIZED":
-
             for lang, text in translations.items():
                 self.update_recognized_translation(lang, text)
             

@@ -5,15 +5,16 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import font as tkfont
 from translation_view import TranslationView
+from config_session_view import ConfigSessionView
 
 class SessionsView(tk.Frame):
-    def __init__(self, root, controller):
+    def __init__(self, root, config_session_callback):
         super().__init__(root)
         self.root = root
-        self.controller = controller
-        self.launch()
+        self.config_session_callback = config_session_callback
+        self.build_ui()
         
-    def launch(self):
+    def build_ui(self):
         # Listbox for sessions
         self.sessions_list = ttk.Treeview(self, columns=('Date', 'Duration', 'Source Language', 'Target Language'))
         self.sessions_list.heading('#0', text='Session ID')
@@ -24,21 +25,18 @@ class SessionsView(tk.Frame):
         self.sessions_list.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 
         # Buttons for actions
-        self.start_new_button = tk.Button(self, text="Start New Session", command=self.controller.launch_new_session_view)
+        self.start_new_button = tk.Button(self, text="Start New Session", command=self.on_new_session_pressed)
         self.start_new_button.grid(row=1, column=0, sticky='ew', padx=10)
 
         # Configure grid
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
-
        
         self.pack(expand=True, fill=tk.BOTH)  # Pack the app within the root window
         self.load_sessions()
 
-
-    def start_new_session(self):
-        # Placeholder: Logic to start a new session
-        pass    
+    def on_new_session_pressed(self):
+        self.config_session_callback()
 
     def load_sessions(self):
         # Simulated data
