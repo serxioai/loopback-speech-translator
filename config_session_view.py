@@ -63,6 +63,9 @@ class ConfigSessionView(tk.Toplevel):
         self.process_and_close(source_lang, target_lang)
 
     def process_and_close(self, source_lang, target_lang):
+
+        audio_source = self.audio_source_option.get()
+
         language_options = {
             'English': 'en',
             'Spanish': 'es',
@@ -70,9 +73,16 @@ class ConfigSessionView(tk.Toplevel):
             'German': 'de'
         }
 
-        # Format and store the config data for the session
-        self.session_config_data['audio_source'] = self.audio_source_option.get()
-        self.session_config_data['target_languages'] = [language_options[source_lang], language_options[target_lang]]
+        # Build the speech session dict
+        self.session_config_data = {
+            'audio_source': audio_source,
+            'speech_rec_lang':'en-US',
+            'detectable_lang':["en-US", "es-MX"],
+            'languages': {
+                'input': language_options[source_lang],
+                'output': language_options[target_lang]
+            }
+        }
 
         try:
             self.on_start_session(self.session_config_data)

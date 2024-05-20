@@ -17,13 +17,20 @@ class AzureSpeechTranslateSession:
         self.session_id = session_id
         self.detected_language = None
        
+        print(config_data)
+
         # Config data
-        self.target_languages = config_data['target_languages']
-        self.input_language = config_data['target_languages'][0]
-        self.output_language = config_data['target_languages'][1] # This can be a list of languages
-        self.speech_recognition_language = "en-US" 
-        self.detectable_languages = ["en-US", "es-MX"]
+        self.target_languages = [lang for lang in config_data['languages'].values()]
+        #self.target_languages = config_data['languages']['output']
+        self.input_language = config_data['languages']['input']
+        self.speech_recognition_language = config_data['speech_rec_lang'] 
+        self.detectable_languages = config_data['detectable_lang']
         self.selected_audio_source = config_data['audio_source']
+
+        print('AUDIO SOURCE',self.selected_audio_source)
+        print(self.target_languages)
+        print(self.input_language)
+        print(self.detectable_languages)
 
         # Config setup
         self.speech_translation_config = None
@@ -58,7 +65,7 @@ class AzureSpeechTranslateSession:
         except Exception as e:
             print("Failed to start recognition:", str(e))
 
-    def stop(self):
+    def stop(self, args):
         self.translation_recognizer.stop_continuous_recognition()
 
     def get_recognized_buffer(self):
@@ -135,13 +142,10 @@ class AzureSpeechTranslateSession:
 
         self.translation_recognizer.session_stopped.connect(
             lambda evt: print('SESSION STOPPED {}'.format(evt)))
-            
-        self.translation_recognizer.canceled.connect(
-            lambda evt: print('CANCELED: {} ({})'.format(evt, evt.reason)))
+        
+        self.translation_recognizer.canceled.connect(self.on_canceled)
 
-        self.translation_recognizer.session_stopped.connect(self.stop_cb)
-
-        self.translation_recognizer.canceled.connect(self.stop_cb)
+        self.translation_recognizer.session_stopped.connect(self.stop)
  
     def set_recognized_callback(self, callback):
         self.recognized_callback = callback
@@ -200,9 +204,11 @@ class AzureSpeechTranslateSession:
     def reset_translation_recognizer(self):
         self.translation_recognizer = None
 
-    def stop_cb(evt):
-        print('CLOSING on {}'.format(evt))
-        done = True
+    def on_canceled(self, args):
+        print(f"Canceled: {args.reason}")
+        if args.reason == speechsdk.CancellationReason.Error and self.should_reconnect:
+            print("Error during session, attempting to reconnect...")
+            self.connect()
     
     # This is a final rendering
     def update_recognized_translation(self, language, translation):

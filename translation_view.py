@@ -5,7 +5,9 @@ from tkinter import font as tkfont
 import time
 
 class TranslationView(tk.Frame):
-    def __init__(self, current_session, root, 
+    def __init__(self, 
+                 current_session, 
+                 root, 
                  on_start_speech_session_callback,
                  on_stop_speech_session_callback,
                  on_change_recognizing_event_rate_callback):

@@ -23,7 +23,7 @@ class AppController:
         self.factory = SessionFactory()
         self.current_view = None
         self.current_session = None
-        self.launch_login_view()
+        self.launch_config_session_view()
 
     def launch_login_view(self):
         self.clear_current_view()
