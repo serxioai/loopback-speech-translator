@@ -119,9 +119,9 @@ class TranslationView(tk.Frame):
     def on_recognized_updated(self):
         for index, lang in enumerate(self.session.target_languages):
             if index == 0:    
-                recognized_text_source = self.session.get_recognized_translations(lang)
+                self.detected_language = self.session.get_recognized_translations(lang)
             if index == 1:
-                recognized_text_target = self.session.get_recognized_translations(lang)
+                self.detected_language = self.session.get_recognized_translations(lang)
 
         # Update the UI with translations
         self.update_recognized_texts(recognized_text_source, recognized_text_target)

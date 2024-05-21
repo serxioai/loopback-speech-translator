@@ -36,7 +36,6 @@ class AzureSpeechTranslateSession:
         self.recognizing_callback = None
         self.recognizing_event_counter = 0
         self.recognizing_event_rate = 0
-        self.configure()
 
         # Dictionary to hold the result from the recognized events
         self.recognized_buffer = {lang: [] for lang in self.target_languages}
@@ -47,6 +46,8 @@ class AzureSpeechTranslateSession:
 
         # Add a pointer dictionary to track the current item being processed/displayed for each language
         self.current_pointer = {}
+
+        self.configure()
     
     def start(self):
         if not self.translation_recognizer:
@@ -57,7 +58,7 @@ class AzureSpeechTranslateSession:
         except Exception as e:
             print("Failed to start recognition:", str(e))
 
-    def stop(self, args):
+    def stop(self):
         self.translation_recognizer.stop_continuous_recognition()
 
     def get_recognized_buffer(self):
