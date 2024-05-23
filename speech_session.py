@@ -11,6 +11,9 @@ import os
 SUBSCRIPTION_KEY = os.environ.get("SPEECH_KEY")
 SERVICE_REGION = os.environ.get("SPEECH_REGION")
 
+'''{'audio_source': 'default', 'speech_rec_lang': 'en-US', 
+    'detectable_lang': ['en-US', 'es-MX'], 'languages': {'input': 'en', 'output': 'es'}}'''
+
 class AzureSpeechTranslateSession:
     
     def __init__(self, session_id, config_data):
@@ -18,12 +21,13 @@ class AzureSpeechTranslateSession:
         self.detected_language = None
 
         # Config data
-        self.target_languages = [lang for lang in config_data['languages'].values()]
-        self.input_language = config_data['languages']['input']
+        self.languages = config_data['languages']
+        self.output_languages = [lang for lang in config_data['languages'].values()] # format is ['en','es']
+        self.input_languages = config_data['languages']['input']
         self.speech_recognition_language = config_data['speech_rec_lang'] 
         self.detectable_languages = config_data['detectable_lang']
         self.selected_audio_source = config_data['audio_source']
-
+        
         # Config setup
         self.speech_translation_config = None
         self.audio_config = None
@@ -38,7 +42,7 @@ class AzureSpeechTranslateSession:
         self.recognizing_event_rate = 0
 
         # Dictionary to hold the result from the recognized events
-        self.recognized_buffer = {lang: [] for lang in self.target_languages}
+        self.recognized_buffer = {lang: [] for lang in self.output_languages}
         
         # Storage the recognizing text output 
         self.observable_buffer = {}
@@ -64,6 +68,9 @@ class AzureSpeechTranslateSession:
     def get_recognized_buffer(self):
         return self.recognized_buffer
     
+    def get_languages(self):
+        return self.languages
+    
     def configure(self):
         self.speech_translation_config = self.init_speech_translation_config()
         self.audio_config = self.set_audio_source()
@@ -78,7 +85,7 @@ class AzureSpeechTranslateSession:
             subscription=SUBSCRIPTION_KEY,
             region=SERVICE_REGION,
             speech_recognition_language= self.speech_recognition_language,
-            target_languages= self.target_languages
+            target_languages= self.output_languages
             )
         
         # Start and stop continuous recognition with Continuous LID
@@ -113,8 +120,8 @@ class AzureSpeechTranslateSession:
     def get_speech_recognition_language(self) -> str:
         return self.speech_recognition_language
     
-    def get_target_languages(self) -> tuple[str, str]:
-        return self.target_languages
+    def get_output_languages(self) -> tuple[str, str]:
+        return self.output_languages
 
     def set_recognizing_event_rate(self, rate):    
         self.recognizing_event_rate = rate
@@ -169,7 +176,7 @@ class AzureSpeechTranslateSession:
         # TODO: implement language detection
         
         translations = evt.result.translations
-        print(translations)
+        #print(translations)
 
         # If translations dictionary is empty, return early
         if not translations:
