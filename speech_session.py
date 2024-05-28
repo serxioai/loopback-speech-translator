@@ -11,12 +11,11 @@ import os
 SUBSCRIPTION_KEY = os.environ.get("SPEECH_KEY")
 SERVICE_REGION = os.environ.get("SPEECH_REGION")
 
-'''{'audio_source': 'default', 'speech_rec_lang': 'en-US', 
-    'detectable_lang': ['en-US', 'es-MX'], 'languages': {'input': 'en', 'output': 'es'}}'''
-
 class AzureSpeechTranslateSession:
     
-    def __init__(self, session_id, config_data):
+    def __init__(self, user_id, db_manager, session_id, config_data):
+        self.user_id = user_id
+        self.db_manager = db_manager
         self.session_id = session_id
         self.detected_language = None
 
@@ -176,8 +175,7 @@ class AzureSpeechTranslateSession:
         # TODO: implement language detection
         
         translations = evt.result.translations
-        #print(translations)
-
+        # print(translations)
         # If translations dictionary is empty, return early
         if not translations:
             return
@@ -275,7 +273,17 @@ class AzureSpeechTranslateSession:
             if language in self.buffers:
                 self.recognized_buffer[language] = [translation]
 
-    def save_translations(self):
-        pass
+    def save_translations(self, timestamp, input_transcription, output_translation):
 
-
+        try:
+            self.db_manager.translations.insert_one({
+                "user_id": self.user_id,
+                "session_id": self.session_id,
+                "timestamp": timestamp,
+                "in": input_transcription,
+                "out": output_translation,
+            })
+            return True
+        except Exception as e:
+            print(f"Failed to save translation: {e}")
+            return False
