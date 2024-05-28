@@ -27,7 +27,7 @@ class TranslationView(tk.Frame):
         self.build_ui()
 
         self.current_session.set_recognizing_callback(self.on_recognizing_updated)
-        self.current_session.set_recognized_callback(self.on_recognized_updated)
+        #self.current_session.set_recognized_callback(self.on_recognized_updated)
        
     def build_ui(self):
         
@@ -87,45 +87,42 @@ class TranslationView(tk.Frame):
         text_widget.insert('top_insert', text + "\n", tag)
         # Move the 'top_insert' mark to just after the newly inserted text
         text_widget.mark_set("top_insert", "top_insert + 1 line")
-        
-    def on_recognized_updated(self):
+    
+    def display_recognized_translations(self, current_time, input_transcription, output_translation):
         arrow_shape = '↳'
         arrow_font = Font(family="Arial Unicode MS", size=30)
-        # time_stamp_font = Font(family="Arial Unicode MS", size=15)
 
-        try:
-            
-            print("Updating recognized translations...")
-            current_time = time.strftime("%H:%M:%S")  # Get current time
-            print(f"Current Time: {current_time}")
+        self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
+        self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
+        self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
+        self.detected_languages_text.insert('1.0', f"{input_transcription}\n", 'display_font')
+        self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
 
-            # Extract the input and output languages
-            input_lang = self.current_session.languages['input']
-            output_lang = self.current_session.languages['output']
+    # def on_recognized_updated(self):
+    #     arrow_shape = '↳'
+    #     arrow_font = Font(family="Arial Unicode MS", size=30)
 
-            # Use join() to concatenate them with "<>" in between
-            # formatted_lang_codes = "<>".join([input_lang, output_lang])
-            input_translation = self.current_session.get_recognized_translations(input_lang)
-            output_translation = self.current_session.get_recognized_translations(output_lang)
+    #     # time_stamp_font = Font(family="Arial Unicode MS", size=15)
+    #     try:
+    #         print("Updating recognized translations...")
+    #         current_time = time.strftime("%H:%M:%S")  # Get current time
+    #         print(f"Current Time: {current_time}")
 
-            # time_stamp_string = f"\n{current_time}:\n\n{input_translation}"
-            # Inserting the formatted translation text
-            # self.detected_languages_text.tag_config('bold', font=time_stamp_font)
-            # self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold')
-            # Define a mark to manage where new text is inserted
+    #         # Extract the input and output languages
+    #         input_lang = self.current_session.languages['input']
+    #         output_lang = self.current_session.languages['output']
 
-            #self.detected_languages_text.mark_set("top_insert", "1.0")  # Start at the beginning
-            #self.detected_languages_text.mark_gravity("top_insert", "right")  # Ensure new inserts go below
-            #self.detected_languages_text.tag_config('bold_font', font=arrow_font)
-            
-            self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
-            self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
-            self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
-            self.detected_languages_text.insert('1.0', f"{input_translation}\n", 'display_font')
-            self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
+    #         input_translation = self.current_session.get_recognized_translations(input_lang)
+    #         output_translation = self.current_session.get_recognized_translations(output_lang)
 
-        except Exception as e:
-            print(f"Error during update: {e}")
+    #         self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
+    #         self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
+    #         self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
+    #         self.detected_languages_text.insert('1.0', f"{input_translation}\n", 'display_font')
+    #         self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
+
+    #     except Exception as e:
+    #         print(f"Error during update: {e}")
 
     def on_recognizing_updated(self):
         self.display_recognizing_text(self.current_session.languages['output'], self.translated_languages)

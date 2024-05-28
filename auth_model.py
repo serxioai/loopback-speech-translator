@@ -10,7 +10,7 @@ class AuthModel:
         self.API_IDENTIFIER = os.environ.get("API_IDENTIFIER")
         self.REDIRECT_URI = "http://localhost:8000/callback"
         self.mongo_client = MongoClient(os.getenv("MONGO_DB_URI"))
-        self.db = self.mongo_client["serxioai"]
+        self.db = self.mongo_client[os.environ.get("MONGO_DATABASE_NAME")]
         self.users_collection = self.db["users"]
 
     def get_auth_url(self):
@@ -42,9 +42,9 @@ class AuthModel:
         except Exception as e:
             print("Error occurred while inserting user:", str(e))
 
-
     def authenticate_user(self, username, password):
         user = self.users_collection.find_one({"username": username})
         if user and user["password"] == password:
-            return True
-        return False
+            return user  # Return the user document
+        return None  # Return None if authentication fails
+
