@@ -3,6 +3,7 @@
 import tkinter as tk
 import webbrowser
 import os
+import signalr_client
 from session_factory import SessionFactory
 from config_session_view import ConfigSessionView
 from translation_view import TranslationView

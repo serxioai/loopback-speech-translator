@@ -74,8 +74,6 @@ class AzureSpeechTranslateSession:
         self.speech_translation_config = self.init_speech_translation_config()
         self.audio_config = self.set_audio_source()
         self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
-        #print("Detectable languages set in AutoDetectSourceLanguageConfig:")
-        #print(self.auto_detect_source_language_config.language)
         self.translation_recognizer = self.init_translation_recognizer()
         self.set_event_callbacks()
 

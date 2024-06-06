@@ -98,32 +98,6 @@ class TranslationView(tk.Frame):
         self.detected_languages_text.insert('1.0', f"{input_transcription}\n", 'display_font')
         self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
 
-    # def on_recognized_updated(self):
-    #     arrow_shape = '↳'
-    #     arrow_font = Font(family="Arial Unicode MS", size=30)
-
-    #     # time_stamp_font = Font(family="Arial Unicode MS", size=15)
-    #     try:
-    #         print("Updating recognized translations...")
-    #         current_time = time.strftime("%H:%M:%S")  # Get current time
-    #         print(f"Current Time: {current_time}")
-
-    #         # Extract the input and output languages
-    #         input_lang = self.current_session.languages['input']
-    #         output_lang = self.current_session.languages['output']
-
-    #         input_translation = self.current_session.get_recognized_translations(input_lang)
-    #         output_translation = self.current_session.get_recognized_translations(output_lang)
-
-    #         self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
-    #         self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
-    #         self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
-    #         self.detected_languages_text.insert('1.0', f"{input_translation}\n", 'display_font')
-    #         self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
-
-    #     except Exception as e:
-    #         print(f"Error during update: {e}")
-
     def on_recognizing_updated(self):
         self.display_recognizing_text(self.current_session.languages['output'], self.translated_languages)
 
