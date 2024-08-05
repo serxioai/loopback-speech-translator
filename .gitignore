@@ -169,3 +169,8 @@ cython_debug/
 
 # MongoDb
 test_*
+
+
+.python-version
+env-loopback/
+loopback-speech-translator.code-workspace

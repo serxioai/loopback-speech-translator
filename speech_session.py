@@ -8,8 +8,8 @@ import difflib
 import threading
 import os
 
-SUBSCRIPTION_KEY = os.environ.get("SPEECH_KEY")
-SERVICE_REGION = os.environ.get("SPEECH_REGION")
+SUBSCRIPTION_KEY = os.environ.get("AZURE_KEY")
+SERVICE_REGION = os.environ.get("AZURE_REGION")
 
 class AzureSpeechTranslateSession:
     
@@ -80,6 +80,7 @@ class AzureSpeechTranslateSession:
         self.set_event_callbacks()
 
     def init_speech_translation_config(self):
+        print("speech_translation_config: ", self.speech_translation_config)
         speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
             subscription=SUBSCRIPTION_KEY,
             region=SERVICE_REGION,
@@ -87,6 +88,8 @@ class AzureSpeechTranslateSession:
             target_languages= self.output_languages
             )
         
+        print("speech_translation_config: ", self.speech_translation_config)
+
         # Start and stop continuous recognition with Continuous LID
         speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
 
@@ -94,7 +97,7 @@ class AzureSpeechTranslateSession:
     
     def set_audio_source(self):
         if self.selected_audio_source == "headphones":
-            audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole16ch_UID")
+            audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole64ch_UID")
         elif self.selected_audio_source == "default":
             audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
 
