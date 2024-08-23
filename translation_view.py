@@ -32,9 +32,9 @@ class TranslationView(tk.Frame):
     def build_ui(self):
         
         # Define gui fonts and styles
-        display_font = tkfont.Font(family="Arial Unicode MS", size=15)
+        display_font = tkfont.Font(family="Arial Unicode MS", size=25)
 
-        self.grid_columnconfigure(0, weight=3)  # Left column (3/5)
+        self.grid_columnconfigure(0, weight=2)  # Left column (3/5)
         self.grid_columnconfigure(1, weight=2)  # Right column (3/5)
         self.grid_rowconfigure(0, weight=1)  # Top row
         self.grid_rowconfigure(1, weight=0)  # Bottom row
