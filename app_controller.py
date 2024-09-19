@@ -7,6 +7,7 @@ from session_factory import SessionFactory
 from config_session_view import ConfigSessionView
 from translation_view import TranslationView
 from login_view import LoginView
+from splash_view import SplashView
 from auth_model import AuthModel
 from create_account import CreateAccount
 from auth_model import AuthModel
@@ -25,25 +26,26 @@ class AppController:
         self.factory = SessionFactory(self.db_manager)
         self.current_view = None
         self.current_session = None
-        self.launch_login_view()
-        
-        # For develpment default to config session view
-        # self.launch_config_session_view()
+        self.show_splash_screen()
+
+    def show_splash_screen(self):
+        self.clear_current_view()
+        self.current_view = SplashView(self.root, "assets/images/splash.jpeg", duration=3000, callback=self.launch_login_view)
+        self.current_view.pack(expand=True, fill=tk.BOTH)
 
     def launch_login_view(self):
         self.clear_current_view()
         self.current_view = LoginView(self.root, self.on_login, self.on_register)
-        self.current_view.grid(sticky="nsew")
+        self.current_view.pack(expand=True, fill=tk.BOTH)
 
     def on_login(self, username, password):
         user_doc = self.auth_model.authenticate_user(username, password)
         if user_doc:
             user_id = user_doc["_id"]
             self.factory.set_user_id(user_id)
-            self.launch_config_session_view ()
+            self.launch_config_session_view()
         else:
             print("Authentication failed")
-
 
     def on_register(self):
         self.clear_current_view()
@@ -56,8 +58,10 @@ class AppController:
 
     # Default callback to config session view
     def launch_config_session_view(self) -> ConfigSessionView:
+        self.clear_current_view()
         self.current_view = ConfigSessionView(self.root, 
                                                self.launch_translation_view)
+        self.current_view.grid(row=0, column=0, sticky="nsew")
   
     def launch_translation_view(self, data):
         self.current_session = self.factory.init_session(data)
@@ -83,11 +87,11 @@ class AppController:
 
     def clear_current_view(self):
         if self.current_view:
-            if isinstance(self.current_view, tk.Toplevel):
-                self.current_view.destroy()
-            else:
+            if hasattr(self.current_view, 'pack_forget'):
                 self.current_view.pack_forget()
-                self.current_view.destroy()
+            elif hasattr(self.current_view, 'grid_forget'):
+                self.current_view.grid_forget()
+            self.current_view.destroy()
             self.current_view = None
 
     def on_start_audio_stream(self):
