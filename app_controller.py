@@ -6,7 +6,6 @@ import os
 from session_factory import SessionFactory
 from config_session_view import ConfigSessionView
 from translation_view import TranslationView
-from sessions_view import SessionsView
 from login_view import LoginView
 from auth_model import AuthModel
 from create_account import CreateAccount
@@ -27,8 +26,9 @@ class AppController:
         self.current_view = None
         self.current_session = None
         self.launch_login_view()
-        # self.launch_config_session_view()
-
+        
+        # For develpment default to config session view
+        self.launch_config_session_view()
 
     def launch_login_view(self):
         self.clear_current_view()
@@ -76,11 +76,7 @@ class AppController:
         self.httpd.controller = self
         threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
 
-    def launch_sessions_view(self):
-        self.clear_current_view()
-        self.current_view = SessionsView(self.root, self.launch_config_session_view)
-        self.current_view.grid(row=0, column=0, sticky="nsew")
-
+    # Default callback to config session view
     def launch_config_session_view(self) -> ConfigSessionView:
         self.current_view = ConfigSessionView(self.root, 
                                                self.launch_translation_view)
@@ -93,7 +89,6 @@ class AppController:
             self.root, 
             self.on_start_audio_stream,
             self.on_stop_audio_stream,
-            self.on_change_recognizing_event_rate,
         )
         self.current_view.grid(row=0, column=0, sticky="nsew")
         self.current_session.set_recognized_callback(self.update_recognized_translations)
@@ -124,7 +119,3 @@ class AppController:
     def on_stop_audio_stream(self):
         if self.current_session:
             self.current_session.stop()
-
-    def on_change_recognizing_event_rate(self, rate):
-        if self.current_session:
-            self.current_session.set_recognizing_event_rate(rate)
