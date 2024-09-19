@@ -28,7 +28,7 @@ class AppController:
         self.launch_login_view()
         
         # For develpment default to config session view
-        self.launch_config_session_view()
+        # self.launch_config_session_view()
 
     def launch_login_view(self):
         self.clear_current_view()
@@ -39,9 +39,8 @@ class AppController:
         user_doc = self.auth_model.authenticate_user(username, password)
         if user_doc:
             user_id = user_doc["_id"]
-            print("Authenticated user's _id:", user_id)
             self.factory.set_user_id(user_id)
-            self.launch_sessions_view()
+            self.launch_config_session_view ()
         else:
             print("Authentication failed")
 
@@ -54,27 +53,6 @@ class AppController:
     def on_create_account(self, email, username, password):
         self.auth_model.register_user(email, username, password)
         self.launch_login_view()
-
-    def start_auth_server(self):
-        class AuthHandler(BaseHTTPRequestHandler):
-            def do_GET(self):
-                query = urlparse.urlparse(self.path).query
-                params = urlparse.parse_qs(query)
-                if 'code' in params:
-                    auth_code = params['code'][0]
-                    result = self.server.controller.auth_model.process_auth_response(auth_code)
-                    if 'access_token' in result:
-                        self.server.controller.launch_sessions_view()
-                    else:
-                        self.server.controller.current_view.display_error("Authentication Failed")
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"Authentication complete. You can close this window.")
-        
-        server_address = ('', 8000)
-        self.httpd = HTTPServer(server_address, AuthHandler)
-        self.httpd.controller = self
-        threading.Thread(target=self.httpd.serve_forever, daemon=True).start()
 
     # Default callback to config session view
     def launch_config_session_view(self) -> ConfigSessionView:

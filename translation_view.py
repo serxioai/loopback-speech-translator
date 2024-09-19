@@ -10,12 +10,10 @@ class TranslationView(tk.Frame):
                  current_session, 
                  root, 
                  on_start_speech_session_callback,
-                 on_stop_speech_session_callback,
-                 on_change_recognizing_event_rate_callback):
+                 on_stop_speech_session_callback):
         super().__init__(root)
         self.root = root
         self.current_session = current_session
-        self.on_change_recognizing_event_rate_callback = on_change_recognizing_event_rate_callback
         self.on_start_speech_session_callback = on_start_speech_session_callback
         self.on_stop_speech_session_callback = on_stop_speech_session_callback
         self.grid(sticky="nsew")
@@ -64,13 +62,6 @@ class TranslationView(tk.Frame):
 
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_speech_session_callback)
         self.stop_button.grid(row=0, column=2, padx=10, pady=5)
-
-        # Add a slider vertically to the right of the buttons
-        self.recognizing_rate_slider = tk.Scale(self.bottom_bar, from_=0, to=5, orient='horizontal', label='')
-        self.recognizing_rate_slider.grid(row=0, column=3, padx=10, pady=5)
-        self.recognizing_rate_slider.set(0)
-        self.recognizing_rate_slider.bind("<Motion>", lambda event: self.on_change_recognizing_event_rate_callback(self.recognizing_rate_slider.get()))
-
    
     def clear_screen(self):
         self.translated_languages.delete(1.0, tk.END)
