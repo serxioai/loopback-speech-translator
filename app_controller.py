@@ -7,7 +7,6 @@ from session_factory import SessionFactory
 from config_session_view import ConfigSessionView
 from translation_view import TranslationView
 from login_view import LoginView
-from splash_view import SplashView
 from auth_model import AuthModel
 from create_account import CreateAccount
 from auth_model import AuthModel
@@ -26,17 +25,12 @@ class AppController:
         self.factory = SessionFactory(self.db_manager)
         self.current_view = None
         self.current_session = None
-        self.show_splash_screen()
-
-    def show_splash_screen(self):
-        self.clear_current_view()
-        self.current_view = SplashView(self.root, "assets/images/splash.jpeg", duration=3000, callback=self.launch_login_view)
-        self.current_view.pack(expand=True, fill=tk.BOTH)
+        self.launch_login_view()
 
     def launch_login_view(self):
         self.clear_current_view()
         self.current_view = LoginView(self.root, self.on_login, self.on_register)
-        self.current_view.pack(expand=True, fill=tk.BOTH)
+        #self.current_view.pack(expand=True, fill=tk.BOTH)
 
     def on_login(self, username, password):
         user_doc = self.auth_model.authenticate_user(username, password)

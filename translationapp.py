@@ -18,7 +18,7 @@ def connect_db() -> DatabaseManager:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Kasana")
+    root.title("")
     root.geometry("1024x768")  # Set a default size if needed
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
