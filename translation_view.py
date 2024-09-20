@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 import time
 from tkinter.font import Font
+from tkinter import ttk
 
 class TranslationView(tk.Frame):
     def __init__(self, 
@@ -34,20 +35,34 @@ class TranslationView(tk.Frame):
 
         self.grid_columnconfigure(0, weight=2)  # Left column (3/5)
         self.grid_columnconfigure(1, weight=2)  # Right column (3/5)
-        self.grid_rowconfigure(0, weight=1)  # Top row
-        self.grid_rowconfigure(1, weight=0)  # Bottom row
+        self.grid_rowconfigure(0, weight=0)  # Top row for dropdowns
+        self.grid_rowconfigure(1, weight=1)  # Middle row for text
+        self.grid_rowconfigure(2, weight=0)  # Bottom row for buttons
+
+        # Language options
+        language_options = ["English (American)", "Spanish", "German"]
+
+        # Left dropdown (source language)
+        self.left_dropdown = ttk.Combobox(self, values=language_options, state="readonly")
+        self.left_dropdown.set("Select source language")
+        self.left_dropdown.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+
+        # Right dropdown (target language)
+        self.right_dropdown = ttk.Combobox(self, values=language_options, state="readonly")
+        self.right_dropdown.set("English (American)")
+        self.right_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
         # Text display windows
-        self.translated_languages = tk.Text(self, bg="white", font=display_font)  # RECOGNIZING status
         self.detected_languages_text = tk.Text(self, bg="white", font=display_font)
+        self.translated_languages = tk.Text(self, bg="white", font=display_font)
 
         # Place the text widgets in the frames
-        self.detected_languages_text.grid(row=0, column=0, sticky="nsew", padx=1, pady=1)
-        self.translated_languages.grid(row=0, column=1, sticky="nsew", padx=1, pady=1)
+        self.detected_languages_text.grid(row=1, column=0, sticky="nsew", padx=1, pady=1)
+        self.translated_languages.grid(row=1, column=1, sticky="nsew", padx=1, pady=1)
 
         # Add a bar at the bottom
         self.bottom_bar = tk.Frame(self)
-        self.bottom_bar.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.bottom_bar.grid(row=2, column=0, columnspan=2, sticky="ew")
 
         # Configure grid columns for spacing
         self.bottom_bar.grid_columnconfigure(0, weight=1)
@@ -61,7 +76,7 @@ class TranslationView(tk.Frame):
         self.start_button.grid(row=0, column=1, padx=10, pady=5)
 
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_speech_session_callback)
-        self.stop_button.grid(row=0, column=2, padx=10, pady=5)
+        self.stop_button.grid(row=0, column=3, padx=10, pady=5)
    
     def clear_screen(self):
         self.translated_languages.delete(1.0, tk.END)

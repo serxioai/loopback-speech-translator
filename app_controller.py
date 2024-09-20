@@ -30,14 +30,13 @@ class AppController:
     def launch_login_view(self):
         self.clear_current_view()
         self.current_view = LoginView(self.root, self.on_login, self.on_register)
-        #self.current_view.pack(expand=True, fill=tk.BOTH)
 
     def on_login(self, username, password):
         user_doc = self.auth_model.authenticate_user(username, password)
         if user_doc:
             user_id = user_doc["_id"]
             self.factory.set_user_id(user_id)
-            self.launch_config_session_view()
+            self.launch_translation_view()
         else:
             print("Authentication failed")
 
@@ -57,7 +56,7 @@ class AppController:
                                                self.launch_translation_view)
         self.current_view.grid(row=0, column=0, sticky="nsew")
   
-    def launch_translation_view(self, data):
+    '''def launch_translation_view(self, data):
         self.current_session = self.factory.init_session(data)
         self.clear_current_view()
         self.current_view = TranslationView(
@@ -67,7 +66,17 @@ class AppController:
             self.on_stop_audio_stream,
         )
         self.current_view.grid(row=0, column=0, sticky="nsew")
-        self.current_session.set_recognized_callback(self.update_recognized_translations)
+        self.current_session.set_recognized_callback(self.update_recognized_translations)'''
+
+    def launch_translation_view(self):
+        self.clear_current_view()
+        self.current_view = TranslationView(
+            self.current_session,
+            self.root, 
+            self.on_start_audio_stream,
+            self.on_stop_audio_stream,
+        )
+        self.current_view.grid(row=0, column=0, sticky="nsew")
       
     def update_recognized_translations(self):
         current_time = time.strftime("%H:%M:%S")    
