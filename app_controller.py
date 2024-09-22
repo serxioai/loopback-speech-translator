@@ -3,14 +3,13 @@
 import tkinter as tk
 import webbrowser
 import os
-from session_factory import SessionFactory
-from config_session_view import ConfigSessionView
 from translation_view import TranslationView
 from login_view import LoginView
 from auth_model import AuthModel
 from create_account import CreateAccount
 from auth_model import AuthModel
 import time
+from azure_speech_translate_api import AzureSpeechTranslateAPI
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
@@ -22,24 +21,49 @@ class AppController:
         self.db_manager = db_manager
         self.root = root
         self.auth_model = AuthModel()
-        self.factory = SessionFactory(self.db_manager)
         self.current_view = None
         self.current_session = None
-        self.launch_login_view()
+        self.logged_in_status = False
+        self.check_login_status()  # Call this instead of directly launching translation view
+
+    def check_login_status(self):
+        # Check if there's a stored user session
+        stored_user_id = self.auth_model.get_stored_user_id()
+        if stored_user_id:
+            self.user_id = stored_user_id
+            self.logged_in_status = True
+        
+        self.launch_translation_view()
+    
+    def launch_translation_view(self):
+        if self.current_view:
+            self.current_view.destroy()
+        self.azure_speech_translate_api = AzureSpeechTranslateAPI(self.user_id, self.db_manager)
+        self.current_view = TranslationView(
+            self.root, 
+            self.logged_in_status,
+            self.on_start_audio_stream,
+            self.on_stop_audio_stream,
+            self.azure_speech_translate_api
+        )
+        self.current_view.grid(row=0, column=0, sticky="nsew")
 
     def launch_login_view(self):
-        self.clear_current_view()
+        if self.current_view:
+            self.current_view.destroy()
         self.current_view = LoginView(self.root, self.on_login, self.on_register)
+        # No need to pack or grid the LoginView, as it's a Toplevel window
 
     def on_login(self, username, password):
         user_doc = self.auth_model.authenticate_user(username, password)
         if user_doc:
-            user_id = user_doc["_id"]
-            self.factory.set_user_id(user_id)
+            user_id = str(user_doc["_id"])
+            self.user_id = user_id
+            self.auth_model.store_user_id(user_id)
             self.launch_translation_view()
         else:
             print("Authentication failed")
-
+    
     def on_register(self):
         self.clear_current_view()
         self.current_view = CreateAccount(self.root, self.on_create_account)
@@ -49,12 +73,11 @@ class AppController:
         self.auth_model.register_user(email, username, password)
         self.launch_login_view()
 
-    # Default callback to config session view
-    def launch_config_session_view(self) -> ConfigSessionView:
+    '''def launch_config_session_view(self) -> ConfigSessionView:
         self.clear_current_view()
         self.current_view = ConfigSessionView(self.root, 
                                                self.launch_translation_view)
-        self.current_view.grid(row=0, column=0, sticky="nsew")
+        self.current_view.grid(row=0, column=0, sticky="nsew")'''
   
     '''def launch_translation_view(self, data):
         self.current_session = self.factory.init_session(data)
@@ -67,16 +90,6 @@ class AppController:
         )
         self.current_view.grid(row=0, column=0, sticky="nsew")
         self.current_session.set_recognized_callback(self.update_recognized_translations)'''
-
-    def launch_translation_view(self):
-        self.clear_current_view()
-        self.current_view = TranslationView(
-            self.current_session,
-            self.root, 
-            self.on_start_audio_stream,
-            self.on_stop_audio_stream,
-        )
-        self.current_view.grid(row=0, column=0, sticky="nsew")
       
     def update_recognized_translations(self):
         current_time = time.strftime("%H:%M:%S")    
@@ -104,3 +117,9 @@ class AppController:
     def on_stop_audio_stream(self):
         if self.current_session:
             self.current_session.stop()
+
+    def logout(self):
+        self.auth_model.clear_stored_user_id()
+        self.user_id = None
+        self.factory.set_user_id(None)
+        self.launch_login_view()

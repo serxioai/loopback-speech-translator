@@ -5,18 +5,22 @@ from tkinter import font as tkfont
 import time
 from tkinter.font import Font
 from tkinter import ttk
+from login_view import LoginView
+from azure_speech_translate_api import AzureSpeechTranslateAPI
 
 class TranslationView(tk.Frame):
     def __init__(self, 
-                 current_session, 
                  root, 
+                 logged_in_status,
                  on_start_speech_session_callback,
-                 on_stop_speech_session_callback):
+                 on_stop_speech_session_callback,
+                 azure_speech_translate_api):
         super().__init__(root)
-        self.root = root
-        self.current_session = current_session
+        self.root = root    
+        self.logged_in_status = logged_in_status
         self.on_start_speech_session_callback = on_start_speech_session_callback
         self.on_stop_speech_session_callback = on_stop_speech_session_callback
+        self.azure_speech_translate_api = azure_speech_translate_api
         self.grid(sticky="nsew")
 
         # Ensure the frame expands
@@ -25,8 +29,8 @@ class TranslationView(tk.Frame):
  
         self.build_ui()
 
-        self.current_session.set_recognizing_callback(self.on_recognizing_updated)
-        #self.current_session.set_recognized_callback(self.on_recognized_updated)
+        self.azure_speech_translate_api.set_recognizing_callback(self.on_recognizing_updated)
+        self.azure_speech_translate_api.set_recognized_callback(self.on_recognized_updated)
        
     def build_ui(self):
         
@@ -77,8 +81,29 @@ class TranslationView(tk.Frame):
 
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_speech_session_callback)
         self.stop_button.grid(row=0, column=3, padx=10, pady=5)
-   
-    def clear_screen(self):
+
+        if not self.logged_in_status:
+            self.start_button.config(state=tk.DISABLED)
+            self.stop_button.config(state=tk.DISABLED)
+            self.launch_login_view()
+    
+    def launch_login_view(self):
+        # Create a Toplevel window
+        self.login_window = tk.Toplevel(self.root)
+        self.login_window.transient(self.root)  # Make the window modal
+        self.login_window.grab_set()  # Ensure all events are directed to this window
+
+        # Create the LoginView inside the Toplevel window
+        self.login_view = LoginView(self.login_window, self.on_login, self.on_register)
+        self.login_view.grid(row=0, column=0, sticky="nsew")
+
+        # Center the modal window over the root window
+        self.root.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (self.login_window.winfo_width() // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (self.login_window.winfo_height() // 2)
+        self.login_window.geometry(f"+{x}+{y}")
+
+    def clear_screen(self): 
         self.translated_languages.delete(1.0, tk.END)
         self.detected_languages_text.delete(1.0, tk.END)
 

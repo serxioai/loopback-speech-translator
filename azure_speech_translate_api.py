@@ -7,25 +7,16 @@ import queue
 import difflib
 import threading
 import os
+import uuid
 
 SUBSCRIPTION_KEY = os.environ.get("AZURE_KEY")
 SERVICE_REGION = os.environ.get("AZURE_REGION")
 
-class AzureSpeechTranslateSession:
+class AzureSpeechTranslateAPI:
     
-    def __init__(self, user_id, db_manager, session_id, config_data):
+    def __init__(self, user_id, db_manager):
         self.user_id = user_id
         self.db_manager = db_manager
-        self.session_id = session_id
-        self.detected_language = None
-
-        # Config data
-        self.languages = config_data['languages']
-        self.output_languages = [lang for lang in config_data['languages'].values()] # format is ['en','es']
-        self.input_languages = config_data['languages']['input']
-        self.speech_recognition_language = config_data['speech_rec_lang'] 
-        self.detectable_languages = config_data['detectable_lang']
-        self.selected_audio_source = config_data['audio_source']
         
         # Config setup
         self.speech_translation_config = None
@@ -33,12 +24,12 @@ class AzureSpeechTranslateSession:
         self.auto_detect_source_language_config = None
         self.translation_recognizer = None
 
-        # Callbacks
-        self.recognizing_event_speed = 0
+        # Event callbacks
         self.recognized_callback = None
         self.recognizing_callback = None
+
+        # Counter to keep track of the number of recognizing events
         self.recognizing_event_counter = 0
-        self.recognizing_event_rate = 0
 
         # Dictionary to hold the result from the recognized events
         self.recognized_buffer = {lang: [] for lang in self.output_languages}
@@ -51,6 +42,14 @@ class AzureSpeechTranslateSession:
         self.current_pointer = {}
 
         self.configure()
+    
+    def set_azure_config(self, config_data):
+        self.languages = config_data['languages']
+        self.output_languages = [lang for lang in config_data['languages'].values()] # format is ['en','es']
+        self.input_languages = config_data['languages']['input']
+        self.speech_recognition_language = config_data['speech_rec_lang'] 
+        self.detectable_languages = config_data['detectable_lang']
+        self.selected_audio_source = config_data['audio_source']
     
     def start(self):
         if not self.translation_recognizer:

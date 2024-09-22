@@ -1,7 +1,7 @@
 
 import unittest
 from unittest.mock import patch
-from speech_session import AzureSpeechTranslateSession
+from azure_speech_translate_api import AzureSpeechTranslateSession
 import os
 
 SUBSCRIPTION_KEY = os.environ.get("SPEECH_KEY")

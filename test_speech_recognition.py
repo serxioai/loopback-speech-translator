@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase, mock
 from azure.cognitiveservices.speech import SpeechRecognizer
-from speech_session import AzureSpeechTranslateSession
+from azure_speech_translate_api import AzureSpeechTranslateSession
 
 class TestSpeechRecognition(TestCase):
     def test_cancellation_handling(self):
