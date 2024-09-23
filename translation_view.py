@@ -2,11 +2,23 @@
 
 import tkinter as tk
 from tkinter import font as tkfont
-import time
 from tkinter.font import Font
 from tkinter import ttk
 from login_view import LoginView
+from tkinter import messagebox
 from azure_speech_translate_api import AzureSpeechTranslateAPI
+
+# TODO: move this to a config file
+language_options = {
+    'English (American)': 'en',
+    'Spanish': 'es',
+    'French': 'fr',
+    'German': 'de'
+}
+
+detectable_languages = ["en-US", "es-MX"]
+
+speech_recognition_language = "en-US"
 
 class TranslationView(tk.Frame):
     def __init__(self, 
@@ -30,29 +42,32 @@ class TranslationView(tk.Frame):
         self.build_ui()
 
         self.azure_speech_translate_api.set_recognizing_callback(self.on_recognizing_updated)
-        self.azure_speech_translate_api.set_recognized_callback(self.on_recognized_updated)
+        self.azure_speech_translate_api.set_recognized_callback(self.on_display_recognized_speech)
        
     def build_ui(self):
         
+        self.source_language_option = tk.StringVar()
+        self.target_language_option = tk.StringVar()
+    
         # Define gui fonts and styles
         display_font = tkfont.Font(family="Arial Unicode MS", size=25)
 
-        self.grid_columnconfigure(0, weight=2)  # Left column (3/5)
-        self.grid_columnconfigure(1, weight=2)  # Right column (3/5)
+        self.grid_columnconfigure(0, weight=2)  # Left column
+        self.grid_columnconfigure(1, weight=2)  # Right column
         self.grid_rowconfigure(0, weight=0)  # Top row for dropdowns
         self.grid_rowconfigure(1, weight=1)  # Middle row for text
         self.grid_rowconfigure(2, weight=0)  # Bottom row for buttons
 
         # Language options
-        language_options = ["English (American)", "Spanish", "German"]
+        self.language_options = ["English (American)", "Spanish", "French", "German"]
 
         # Left dropdown (source language)
-        self.left_dropdown = ttk.Combobox(self, values=language_options, state="readonly")
+        self.left_dropdown = ttk.Combobox(self, values=self.language_options, state='readonly', textvariable=self.source_language_option)
         self.left_dropdown.set("Select source language")
         self.left_dropdown.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
 
         # Right dropdown (target language)
-        self.right_dropdown = ttk.Combobox(self, values=language_options, state="readonly")
+        self.right_dropdown = ttk.Combobox(self, values=self.language_options, state='readonly', textvariable=self.target_language_option)
         self.right_dropdown.set("English (American)")
         self.right_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
@@ -76,18 +91,18 @@ class TranslationView(tk.Frame):
         self.bottom_bar.grid_columnconfigure(4, weight=1)
 
         # Add "Start" and "Stop" buttons to the bottom bar
-        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.on_start_speech_session_callback)
-        self.start_button.grid(row=0, column=1, padx=10, pady=5)
+        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.submit)
+        self.start_button.grid(row=0, column=0, padx=10, pady=5)
 
-        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_speech_session_callback)
-        self.stop_button.grid(row=0, column=3, padx=10, pady=5)
+        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_stream_translation)
+        self.stop_button.grid(row=0, column=1, padx=10, pady=5)
 
         if not self.logged_in_status:
             self.start_button.config(state=tk.DISABLED)
             self.stop_button.config(state=tk.DISABLED)
-            self.launch_login_view()
+            self.display_login_view()
     
-    def launch_login_view(self):
+    def display_login_view(self):
         # Create a Toplevel window
         self.login_window = tk.Toplevel(self.root)
         self.login_window.transient(self.root)  # Make the window modal
@@ -106,59 +121,67 @@ class TranslationView(tk.Frame):
     def clear_screen(self): 
         self.translated_languages.delete(1.0, tk.END)
         self.detected_languages_text.delete(1.0, tk.END)
-
-    def update_text_widget(self, text):
-        print("Updating text widget...")
-        self.detected_languages_text.delete('1.0', 'end')  # Clear existing text
-        self.detected_languages_text.insert('end', text)  # Insert new text
-        print("Update complete.")
-
-    def insert_at_top(text_widget, text, tag=None):
-        # Insert new text at 'top_insert' mark position
-        text_widget.insert('top_insert', text + "\n", tag)
-        # Move the 'top_insert' mark to just after the newly inserted text
-        text_widget.mark_set("top_insert", "top_insert + 1 line")
     
-    def display_recognized_translations(self, current_time, input_transcription, output_translation):
+    def submit(self):
+        source_lang = self.source_language_option.get()
+        target_lang = self.target_language_option.get()
+        audio_source = self.audio_source_option.get()
+
+        translated_languages = self.validate_language_selection(source_lang, target_lang)
+        if translated_languages:
+            encoded_session_data = self.encode_session_data(translated_languages, audio_source)    
+        
+        self.on_stream_translation(encoded_session_data)
+
+    def encode_session_data(self, translated_languages, audio_source):
+         # Build the speech session dict
+        session_data = {
+            'audio_source': audio_source,
+            'speech_rec_lang': speech_recognition_language,
+            'detectable_lang': detectable_languages,
+            'translated_languages': translated_languages
+        }
+        
+        print("SESSION DATA: ", session_data)
+
+        return session_data
+
+    def validate_language_selection(self, source_lang, target_lang):
+        if source_lang == target_lang:
+            messagebox.showerror("Language Selection Error", "Source and target languages must be different.")
+            return False
+
+        if source_lang not in self.language_options or target_lang not in self.language_options:
+            messagebox.showerror("Language Selection Error", "Please select valid languages from the list.")
+            return False
+
+        translated_languages = {
+                'source': language_options[source_lang],
+                'target': language_options[target_lang]
+            }
+
+        return translated_languages
+    
+    def on_stream_translation(self, encoded_session_data):
+        self.azure_speech_translate_api.start_streaming(encoded_session_data)
+
+    def on_stop_stream_translation(self):
+        self.azure_speech_translate_api.stop_streaming()
+
+    def on_display_recognized_speech(self, current_time, input_transcription, output_translation):
         arrow_shape = '↳'
         arrow_font = Font(family="Arial Unicode MS", size=30)
 
-        self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
+        self.detected_languages_text.insert('1.0', f"{input_transcription}\n", 'display_font')
         self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
         self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
-        self.detected_languages_text.insert('1.0', f"{input_transcription}\n", 'display_font')
+        self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
         self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
 
-    # def on_recognized_updated(self):
-    #     arrow_shape = '↳'
-    #     arrow_font = Font(family="Arial Unicode MS", size=30)
-
-    #     # time_stamp_font = Font(family="Arial Unicode MS", size=15)
-    #     try:
-    #         print("Updating recognized translations...")
-    #         current_time = time.strftime("%H:%M:%S")  # Get current time
-    #         print(f"Current Time: {current_time}")
-
-    #         # Extract the input and output languages
-    #         input_lang = self.current_session.languages['input']
-    #         output_lang = self.current_session.languages['output']
-
-    #         input_translation = self.current_session.get_recognized_translations(input_lang)
-    #         output_translation = self.current_session.get_recognized_translations(output_lang)
-
-    #         self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
-    #         self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
-    #         self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
-    #         self.detected_languages_text.insert('1.0', f"{input_translation}\n", 'display_font')
-    #         self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
-
-    #     except Exception as e:
-    #         print(f"Error during update: {e}")
-
     def on_recognizing_updated(self):
-        self.display_recognizing_text(self.current_session.languages['output'], self.translated_languages)
+        self.display_recognizing_text(self.languages['output'], self.translated_languages)
 
-    def display_recognizing_text(self, language, text_widget):
+    def display_recognizing_speech(self, language, text_widget):
 
         # Clear the text widget
         text_widget.delete(1.0, tk.END)

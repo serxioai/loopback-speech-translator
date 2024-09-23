@@ -38,7 +38,11 @@ class AppController:
     def launch_translation_view(self):
         if self.current_view:
             self.current_view.destroy()
-        self.azure_speech_translate_api = AzureSpeechTranslateAPI(self.user_id, self.db_manager)
+        self.azure_speech_translate_api = AzureSpeechTranslateAPI(
+            self.user_id, 
+            self.db_manager,
+            self.update_recognized_translations
+        )
         self.current_view = TranslationView(
             self.root, 
             self.logged_in_status,
