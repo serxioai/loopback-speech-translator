@@ -26,13 +26,16 @@ class TranslationView(tk.Frame):
                  logged_in_status,
                  on_start_speech_session_callback,
                  on_stop_speech_session_callback,
-                 azure_speech_translate_api):
+                 azure_speech_translate_api,
+                 settings):
         super().__init__(root)
         self.root = root    
         self.logged_in_status = logged_in_status
         self.on_start_speech_session_callback = on_start_speech_session_callback
         self.on_stop_speech_session_callback = on_stop_speech_session_callback
         self.azure_speech_translate_api = azure_speech_translate_api
+        self.audio_source = settings["audio_source"]
+        self.speech_detection_language = settings["speech_detection_language"]
         self.grid(sticky="nsew")
 
         # Ensure the frame expands
@@ -125,7 +128,7 @@ class TranslationView(tk.Frame):
     def submit(self):
         source_lang = self.source_language_option.get()
         target_lang = self.target_language_option.get()
-        audio_source = self.audio_source_option.get()
+        audio_source = self.audio_source
 
         translated_languages = self.validate_language_selection(source_lang, target_lang)
         if translated_languages:

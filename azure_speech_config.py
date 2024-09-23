@@ -1,6 +1,6 @@
-
 import os
 import azure.cognitiveservices.speech as speechsdk
+import azure_translation_buffer as translation_buffer
 
 SUBSCRIPTION_KEY = os.environ.get("AZURE_KEY")
 SERVICE_REGION = os.environ.get("AZURE_REGION")
@@ -13,24 +13,29 @@ class AzureSpeechConfig:
         self.translation_recognizer = None
         self.translated_languages = None
         self.speech_recognition_language = None
-        
-    def set_azure_speech_config(self, config_settings):
-        self.languages = config_settings['languages']
-        self.output_languages = [lang for lang in config_settings['languages'].values()] # format is ['en','es']
-        self.input_languages = config_settings['languages']['source']
+        self.languages = None  
+        self.output_languages = None  
+        self.input_languages = None  
+        self.detectable_languages = None  
+        self.selected_audio_source = None
+        self.translation_buffer = translation_buffer.AzureTranslationBuffer()
+
+    def set_azure_speech_settings(self, config_settings):
+        self.languages = config_settings['translated_languages']
+        self.output_languages = [lang for lang in config_settings['translated_languages'].values()] # format is ['en','es']
+        self.input_languages = config_settings['translated_languages']['source']
         self.speech_recognition_language = config_settings['speech_rec_lang'] 
         self.detectable_languages = config_settings['detectable_lang']
         self.selected_audio_source = config_settings['audio_source']
 
-        self.config()
+        self.build_connection()
 
-    def configure(self):
+    def build_connection(self):
         self.speech_translation_config = self.init_speech_translation_config()
         self.audio_config = self.set_audio_source()
-        self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(self.detectable_languages)
-        #print("Detectable languages set in AutoDetectSourceLanguageConfig:")
-        #print(self.auto_detect_source_language_config.language)
+        self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=self.detectable_languages)
         self.translation_recognizer = self.init_translation_recognizer()
+        self.translation_buffer.init_recognized_buffer(self.output_languages)
         self.set_event_callbacks()
 
     def init_speech_translation_config(self):
@@ -47,7 +52,7 @@ class AzureSpeechConfig:
         return speech_translation_config
     
     def set_audio_source(self):
-        if self.selected_audio_source == "headphones":
+        if self.selected_audio_source == "blackhole":
             audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole64ch_UID")
         elif self.selected_audio_source == "default":
             audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
@@ -60,24 +65,43 @@ class AzureSpeechConfig:
             audio_config=self.audio_config,
             auto_detect_source_language_config=self.auto_detect_source_language_config)
         return translation_recognizer
-    
+
     def set_event_callbacks(self):
         
         self.translation_recognizer.recognized.connect(
-            lambda evt: self.result_callback('RECOGNIZED', evt))
+            lambda evt: self.completed_result(evt))
 
         self.translation_recognizer.recognizing.connect(
-            lambda evt: self.result_callback('RECOGNIZING', evt))
+            lambda evt: self.partial_result(evt))
                 
         self.translation_recognizer.session_started.connect(
-            lambda evt: self.result_callback('SESSION STARTED', evt))
+            lambda evt: self.session_started_result(evt))
 
         self.translation_recognizer.session_stopped.connect(
-            lambda evt: print('SESSION STOPPED {}'.format(evt)))
+            lambda evt: self.session_stopped(evt))
         
-        self.translation_recognizer.canceled.connect(self.on_canceled)
+        self.translation_recognizer.canceled.connect(
+            lambda evt: self.canceled(evt))
 
-        self.translation_recognizer.session_stopped.connect(self.stop)
+        self.translation_recognizer.session_stopped.connect(
+            lambda evt: self.session_stopped(evt))
 
     def get_output_languages(self):
         return self.output_languages
+    
+    def partial_result(self, evt):
+        pass
+
+    def completed_result(self, evt):
+        pass
+
+    def canceled(self, evt):
+        pass
+
+    def session_stopped(self, evt):
+        pass
+
+    def session_started_result(self, evt):
+        pass
+
+    

@@ -14,12 +14,17 @@ from azure_speech_translate_api import AzureSpeechTranslateAPI
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 import urllib.parse as urlparse
+import configparser
 
 class AppController:
-    def __init__(self, root, db_manager):
-        self.user_id = None
-        self.db_manager = db_manager
+    def __init__(self, root, db, settings):
         self.root = root
+        self.db = db
+        self.settings = settings
+        self.audio_source = settings["audio_source"]
+        self.speech_detection_language = settings["speech_detection_language"]
+        self.user_id = None
+        self.db_manager = db
         self.auth_model = AuthModel()
         self.current_view = None
         self.current_session = None
@@ -32,25 +37,46 @@ class AppController:
         if stored_user_id:
             self.user_id = stored_user_id
             self.logged_in_status = True
+        else:
+            self.logged_in_status = False
+        
+        # Update the settings.ini file
+        self.update_logged_in_status_in_settings(self.logged_in_status)
         
         self.launch_translation_view()
-    
+
+    def update_logged_in_status_in_settings(self, status):
+        config = configparser.ConfigParser()
+        config.read('settings.ini')
+        
+        if 'Settings' not in config:
+            config['Settings'] = {}
+        
+        config['Settings']['logged_in_status'] = str(status)
+        
+        with open('settings.ini', 'w') as configfile:
+            config.write(configfile)
+
     def launch_translation_view(self):
         if self.current_view:
             self.current_view.destroy()
+        
         self.azure_speech_translate_api = AzureSpeechTranslateAPI(
             self.user_id, 
             self.db_manager,
             self.update_recognized_translations
         )
+
         self.current_view = TranslationView(
             self.root, 
             self.logged_in_status,
             self.on_start_audio_stream,
             self.on_stop_audio_stream,
-            self.azure_speech_translate_api
+            self.azure_speech_translate_api,
+            self.settings
         )
-        self.current_view.grid(row=0, column=0, sticky="nsew")
+        
+        #self.current_view.grid(row=0, column=0, sticky="nsew")
 
     def launch_login_view(self):
         if self.current_view:
@@ -77,12 +103,6 @@ class AppController:
         self.auth_model.register_user(email, username, password)
         self.launch_login_view()
 
-    '''def launch_config_session_view(self) -> ConfigSessionView:
-        self.clear_current_view()
-        self.current_view = ConfigSessionView(self.root, 
-                                               self.launch_translation_view)
-        self.current_view.grid(row=0, column=0, sticky="nsew")'''
-  
     '''def launch_translation_view(self, data):
         self.current_session = self.factory.init_session(data)
         self.clear_current_view()
@@ -123,7 +143,4 @@ class AppController:
             self.current_session.stop()
 
     def logout(self):
-        self.auth_model.clear_stored_user_id()
-        self.user_id = None
-        self.factory.set_user_id(None)
-        self.launch_login_view()
+        pass

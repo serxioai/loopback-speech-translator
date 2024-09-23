@@ -24,17 +24,13 @@ class AzureSpeechTranslateAPI:
         self.azure_translation_buffer = AzureTranslationBuffer()
         self.recognized_callback = recognized_callback
     
-    def set_config(self, config_data):
-        self.azure_speech_config.set_azure_speech_config(config_data)
-
     def start_streaming(self, encoded_session_data):
-        self.set_config(encoded_session_data)
-        self.azure_translation_buffer.init_recognized_buffer(encoded_session_data)
+        self.azure_speech_config.set_azure_speech_settings(encoded_session_data)
 
         if not self.azure_speech_config.translation_recognizer:
             raise ValueError("Translation recognizer is not initialized.")
         try:
-            print(f"SESSION {self.session_id} STARTING...")
+            print(f"SESSION STARTING...")
             self.azure_speech_config.translation_recognizer.start_continuous_recognition()
         except Exception as e:
             print("Failed to start recognition:", str(e))
@@ -79,29 +75,6 @@ class AzureSpeechTranslateAPI:
         else:
             print("No language detected.")
         
-
-    # Update the buffers with the event type text and notify observers
-    def result_callback(self, event_type, evt):
-
-        # TODO: implement language detection
-        
-        translations = evt.result.translations
-        # print(translations)
-        # If translations dictionary is empty, return early
-        if not translations:
-            return
-      
-        if event_type == "RECOGNIZING":
-            self.recognizing_event_counter += 1
-            # Put the newest translation into the observable buffer
-            for lang, text in translations.items():
-                self.update_recognizing_translation(lang, text)        
-
-        elif event_type == "RECOGNIZED":
-            for lang, text in translations.items():
-                self.update_recognized_translation(lang, text)
-            
-            self.recognized_callback()
 
     def get_translation_recognizer(self):
         return self.translation_recognizer
