@@ -7,6 +7,7 @@ from tkinter import ttk
 from login_view import LoginView
 from tkinter import messagebox
 from azure_speech_translate_api import AzureSpeechTranslateAPI
+from asyncio import Event
 
 # TODO: move this to a config file
 language_options = {
@@ -27,25 +28,24 @@ class TranslationView(tk.Frame):
                  on_start_speech_session_callback,
                  on_stop_speech_session_callback,
                  azure_speech_translate_api,
-                 settings):
+                 settings,
+                 on_display_completed_translations_cb,
+                 event_manager):
         super().__init__(root)
         self.root = root    
         self.logged_in_status = logged_in_status
         self.on_start_speech_session_callback = on_start_speech_session_callback
         self.on_stop_speech_session_callback = on_stop_speech_session_callback
-        self.azure_speech_translate_api = azure_speech_translate_api
         self.audio_source = settings["audio_source"]
         self.speech_detection_language = settings["speech_detection_language"]
-        self.grid(sticky="nsew")
-
+        self.event_manager = event_manager
+        
         # Ensure the frame expands
+        self.grid(sticky="nsew")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
  
         self.build_ui()
-
-        self.azure_speech_translate_api.set_recognizing_callback(self.on_recognizing_updated)
-        self.azure_speech_translate_api.set_recognized_callback(self.on_display_recognized_speech)
        
     def build_ui(self):
         
@@ -94,10 +94,10 @@ class TranslationView(tk.Frame):
         self.bottom_bar.grid_columnconfigure(4, weight=1)
 
         # Add "Start" and "Stop" buttons to the bottom bar
-        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.submit)
+        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_streaming)
         self.start_button.grid(row=0, column=0, padx=10, pady=5)
 
-        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.on_stop_stream_translation)
+        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.azure_speech_translate_api.stop_streaming)
         self.stop_button.grid(row=0, column=1, padx=10, pady=5)
 
         if not self.logged_in_status:
@@ -125,29 +125,24 @@ class TranslationView(tk.Frame):
         self.translated_languages.delete(1.0, tk.END)
         self.detected_languages_text.delete(1.0, tk.END)
     
-    def submit(self):
+    def start_streaming(self):
         source_lang = self.source_language_option.get()
         target_lang = self.target_language_option.get()
-        audio_source = self.audio_source
+        audio_source = self.settings["audio_source"]
 
         translated_languages = self.validate_language_selection(source_lang, target_lang)
         if translated_languages:
-            encoded_session_data = self.encode_session_data(translated_languages, audio_source)    
-        
-        self.on_stream_translation(encoded_session_data)
+            # Build the speech session dict
+            session_data = {
+                'audio_source': audio_source,
+                'speech_rec_lang': speech_recognition_language,
+                'detectable_lang': detectable_languages,
+                'translated_languages': translated_languages
+            }
+            
+            print("SESSION DATA: ", session_data)
 
-    def encode_session_data(self, translated_languages, audio_source):
-         # Build the speech session dict
-        session_data = {
-            'audio_source': audio_source,
-            'speech_rec_lang': speech_recognition_language,
-            'detectable_lang': detectable_languages,
-            'translated_languages': translated_languages
-        }
-        
-        print("SESSION DATA: ", session_data)
-
-        return session_data
+            return session_data
 
     def validate_language_selection(self, source_lang, target_lang):
         if source_lang == target_lang:
@@ -165,13 +160,7 @@ class TranslationView(tk.Frame):
 
         return translated_languages
     
-    def on_stream_translation(self, encoded_session_data):
-        self.azure_speech_translate_api.start_streaming(encoded_session_data)
-
-    def on_stop_stream_translation(self):
-        self.azure_speech_translate_api.stop_streaming()
-
-    def on_display_recognized_speech(self, current_time, input_transcription, output_translation):
+    def on_display_completed_translation(self, current_time, input_transcription, output_translation):
         arrow_shape = '↳'
         arrow_font = Font(family="Arial Unicode MS", size=30)
 
@@ -181,10 +170,7 @@ class TranslationView(tk.Frame):
         self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
         self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
 
-    def on_recognizing_updated(self):
-        self.display_recognizing_text(self.languages['output'], self.translated_languages)
-
-    def display_recognizing_speech(self, language, text_widget):
+    def on_display_partial_translation(self, language, text_widget):
 
         # Clear the text widget
         text_widget.delete(1.0, tk.END)
@@ -207,3 +193,11 @@ class TranslationView(tk.Frame):
 
         # Highlight text setup (if not already configured elsewhere)
         text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
+
+    def on_translation_completed(self, buffer):
+        # Update your UI here
+        self.update_ui_with_translation(buffer)
+
+    def update_ui_with_translation(self, buffer):
+        # Implement the UI update logic here
+        pass

@@ -64,24 +64,17 @@ class AppController:
         self.azure_speech_translate_api = AzureSpeechTranslateAPI(
             self.user_id, 
             self.db_manager,
-            self.update_recognized_translations
         )
 
-        self.current_view = TranslationView(
+        TranslationView(
             self.root, 
             self.logged_in_status,
-            self.on_start_audio_stream,
-            self.on_stop_audio_stream,
             self.azure_speech_translate_api,
-            self.settings
+            self.settings,
         )
-        
-        #self.current_view.grid(row=0, column=0, sticky="nsew")
 
     def launch_login_view(self):
-        if self.current_view:
-            self.current_view.destroy()
-        self.current_view = LoginView(self.root, self.on_login, self.on_register)
+        LoginView(self.root, self.on_login, self.on_register)
         # No need to pack or grid the LoginView, as it's a Toplevel window
 
     def on_login(self, username, password):
@@ -102,45 +95,14 @@ class AppController:
     def on_create_account(self, email, username, password):
         self.auth_model.register_user(email, username, password)
         self.launch_login_view()
-
-    '''def launch_translation_view(self, data):
-        self.current_session = self.factory.init_session(data)
-        self.clear_current_view()
-        self.current_view = TranslationView(
-            self.current_session,
-            self.root, 
-            self.on_start_audio_stream,
-            self.on_stop_audio_stream,
-        )
-        self.current_view.grid(row=0, column=0, sticky="nsew")
-        self.current_session.set_recognized_callback(self.update_recognized_translations)'''
       
-    def update_recognized_translations(self):
+    def on_display_completed_translation(self):
         current_time = time.strftime("%H:%M:%S")    
-        input_lang_code = self.current_session.languages['input']
-        output_lang_code = self.current_session.languages['output']
-        input_translation = self.current_session.get_recognized_translations(input_lang_code)
-        output_translation = self.current_session.get_recognized_translations(output_lang_code)
-        print(output_translation)
-        self.current_session.save_translations(current_time, input_translation, output_translation)
-        self.current_view.display_recognized_translations(current_time, input_translation, output_translation)
-
-    def clear_current_view(self):
-        if self.current_view:
-            if hasattr(self.current_view, 'pack_forget'):
-                self.current_view.pack_forget()
-            elif hasattr(self.current_view, 'grid_forget'):
-                self.current_view.grid_forget()
-            self.current_view.destroy()
-            self.current_view = None
-
-    def on_start_audio_stream(self):
-        if self.current_session:
-            self.current_session.start()
-
-    def on_stop_audio_stream(self):
-        if self.current_session:
-            self.current_session.stop()
+        input_lang_code = self.settings.languages['input']
+        output_lang_code = self.settings.languages['output']
+        input_translation = self.azure_speech_translate_api.get_recognized_translations(input_lang_code)
+        output_translation = self.azure_speech_translate_api.get_recognized_translations(output_lang_code)
+        self.azure_speech_translate_api.save_translations(current_time, input_translation, output_translation)
 
     def logout(self):
         pass

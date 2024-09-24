@@ -1,12 +1,9 @@
-
-
-import azure.cognitiveservices.speech as speechsdk
 import difflib
 
-class AzureTranslationBuffer:
+class PartialSpeechTranslationSegment:
     def __init__(self):
-        self.recognized_buffer = None
         self.recognizing_buffer = None
+        
         # Counter to keep track of the number of recognizing events
         self.recognizing_event_counter = 0
         
@@ -17,17 +14,8 @@ class AzureTranslationBuffer:
         # Add a pointer dictionary to track the current item being processed/displayed for each language
         self.current_pointer = {}
 
-    def init_recognized_buffer(self, languages):
-        # Dictionary to hold the result from the recognized events
-        self.recognized_buffer = {lang: [] for lang in languages}
-
-    # This is a final rendering
-    def update_recognized_translation(self, language, translation):
-        if language in self.recognized_buffer:
-            self.recognized_buffer[language].append(translation)
-
-    # Fill the buffer with the translations
-    def update_recognizing_translation(self, language_code, current_transcription):
+     # Fill the buffer with the translations
+    def update(self, language_code, current_transcription):
         # Check if language_code exists in the buffers
         if language_code not in self.observable_buffer:
             self.observable_buffer[language_code] = []
@@ -68,6 +56,6 @@ class AzureTranslationBuffer:
 
     def set_recognizing_event_counter(self, count: int) -> None:
         self.recognizing_event_counter = count
-
+    
     def get_recognizing_event_counter(self) -> int:
         return self.recognizing_event_counter
