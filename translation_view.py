@@ -6,8 +6,8 @@ from tkinter.font import Font
 from tkinter import ttk
 from login_view import LoginView
 from tkinter import messagebox
-from azure_speech_translate_api import AzureSpeechTranslateAPI
-from asyncio import Event
+from completed_speech_translation_buffer import Observer, CompletedSpeechTranslationBuffer
+import time
 
 # TODO: move this to a config file
 language_options = {
@@ -18,27 +18,23 @@ language_options = {
 }
 
 detectable_languages = ["en-US", "es-MX"]
-
 speech_recognition_language = "en-US"
 
-class TranslationView(tk.Frame):
+class TranslationView(tk.Frame, Observer):
     def __init__(self, 
                  root, 
                  logged_in_status,
-                 on_start_speech_session_callback,
-                 on_stop_speech_session_callback,
                  azure_speech_translate_api,
-                 settings,
-                 on_display_completed_translations_cb,
-                 event_manager):
+                 settings):
         super().__init__(root)
         self.root = root    
         self.logged_in_status = logged_in_status
-        self.on_start_speech_session_callback = on_start_speech_session_callback
-        self.on_stop_speech_session_callback = on_stop_speech_session_callback
-        self.audio_source = settings["audio_source"]
-        self.speech_detection_language = settings["speech_detection_language"]
-        self.event_manager = event_manager
+        self.azure_speech_translate_api = azure_speech_translate_api
+        self.settings = settings
+        
+         # Get the shared CompletedSpeechTranslationBuffer
+        self.completed_translation_buffer = azure_speech_translate_api.get_completed_translation_buffer()
+        self.completed_translation_buffer.attach(self)
         
         # Ensure the frame expands
         self.grid(sticky="nsew")
@@ -74,13 +70,13 @@ class TranslationView(tk.Frame):
         self.right_dropdown.set("English (American)")
         self.right_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
-        # Text display windows
-        self.detected_languages_text = tk.Text(self, bg="white", font=display_font)
-        self.translated_languages = tk.Text(self, bg="white", font=display_font)
+        # Translation display windows
+        self.source_language_text = tk.Text(self, bg="white", font=display_font)
+        self.target_language_text = tk.Text(self, bg="white", font=display_font)
 
         # Place the text widgets in the frames
-        self.detected_languages_text.grid(row=1, column=0, sticky="nsew", padx=1, pady=1)
-        self.translated_languages.grid(row=1, column=1, sticky="nsew", padx=1, pady=1)
+        self.source_language_text.grid(row=1, column=0, sticky="nsew", padx=1, pady=1)
+        self.target_language_text.grid(row=1, column=1, sticky="nsew", padx=1, pady=1)
 
         # Add a bar at the bottom
         self.bottom_bar = tk.Frame(self)
@@ -121,6 +117,15 @@ class TranslationView(tk.Frame):
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (self.login_window.winfo_height() // 2)
         self.login_window.geometry(f"+{x}+{y}")
 
+    def update(self, data):
+        for lang, translations in data.items():
+            if translations:
+                latest_translation = translations[-1]
+                if lang == language_options[self.source_language_option.get()]:
+                    self.source_language_text.insert(tk.END, latest_translation + '\n')
+                elif lang == language_options[self.target_language_option.get()]    :
+                    self.target_language_text.insert(tk.END, latest_translation + '\n')
+
     def clear_screen(self): 
         self.translated_languages.delete(1.0, tk.END)
         self.detected_languages_text.delete(1.0, tk.END)
@@ -133,14 +138,17 @@ class TranslationView(tk.Frame):
         translated_languages = self.validate_language_selection(source_lang, target_lang)
         if translated_languages:
             # Build the speech session dict
+            audio_source = self.settings["audio_source"]
+            speech_recognition_language = self.settings["speech_detection_language"]
+
             session_data = {
                 'audio_source': audio_source,
                 'speech_rec_lang': speech_recognition_language,
                 'detectable_lang': detectable_languages,
                 'translated_languages': translated_languages
             }
-            
-            print("SESSION DATA: ", session_data)
+
+            self.azure_speech_translate_api.start_streaming(session_data)
 
             return session_data
 
@@ -159,16 +167,6 @@ class TranslationView(tk.Frame):
             }
 
         return translated_languages
-    
-    def on_display_completed_translation(self, current_time, input_transcription, output_translation):
-        arrow_shape = '↳'
-        arrow_font = Font(family="Arial Unicode MS", size=30)
-
-        self.detected_languages_text.insert('1.0', f"{input_transcription}\n", 'display_font')
-        self.detected_languages_text.tag_config('arrow_font', font=arrow_font, foreground="#0EA1EA")
-        self.detected_languages_text.insert('1.0', f"\t{arrow_shape}", 'arrow_font')  # Unicode character U+21B3
-        self.detected_languages_text.insert('1.0', f"{output_translation}\n", 'display_font')
-        self.detected_languages_text.insert('1.0', f"\n{current_time}:\n\n", 'bold_font')
 
     def on_display_partial_translation(self, language, text_widget):
 
@@ -193,11 +191,3 @@ class TranslationView(tk.Frame):
 
         # Highlight text setup (if not already configured elsewhere)
         text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
-
-    def on_translation_completed(self, buffer):
-        # Update your UI here
-        self.update_ui_with_translation(buffer)
-
-    def update_ui_with_translation(self, buffer):
-        # Implement the UI update logic here
-        pass

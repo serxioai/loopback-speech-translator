@@ -1,8 +1,7 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
-import complete_speech_translation_buffer as complete_speech_translation_buffer
-import partial_speech_translation_segment as partial_speech_translation_segment
-from events import global_event_emitter
+import completed_speech_translation_buffer as completed_speech_translation_buffer
+import partial_speech_translation_buffer as partial_speech_translation_buffer
 
 SUBSCRIPTION_KEY = os.environ.get("AZURE_KEY")
 SERVICE_REGION = os.environ.get("AZURE_REGION")
@@ -23,8 +22,8 @@ class AzureSpeechConfig:
         self.target_language = None
         self.detectable_languages = None  
         self.selected_audio_source = None
-        self.partial_translation = partial_speech_translation_segment.PartialSpeechTranslationSegment()
-        self.complete_translation_buffer = complete_speech_translation_buffer.CompleteSpeechTranslationBuffer()
+        self.partial_translation = partial_speech_translation_buffer.PartialSpeechTranslationBuffer()
+        self.completed_translation_buffer = completed_speech_translation_buffer.CompletedSpeechTranslationBuffer()
 
     def set_azure_speech_settings(self, config_settings):
         self.languages = config_settings['translated_languages']
@@ -40,7 +39,7 @@ class AzureSpeechConfig:
         self.audio_config = self.set_audio_source()
         self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=self.detectable_languages)
         self.translation_recognizer = self.init_translation_recognizer()
-        self.complete_translation_buffer.init_buffer(self.output_languages)
+        self.completed_translation_buffer.init_buffer(self.output_languages)
         # TODO implement partial translation buffer
         self.set_event_callbacks()
 
@@ -115,13 +114,8 @@ class AzureSpeechConfig:
 
     def completed_result(self, evt):
         translations = evt.result.translations
-
-        print(f"Completed result: {evt.result.text}")
-
-        for lang, text in translations.items():
-            self.complete_translation_buffer.update(lang, text)
-
-        global_event_emitter.emit('translation_completed', self.complete_translation_buffer)
+        if translations:
+            self.completed_translation_buffer.update(translations)
 
     def canceled(self, evt):
         pass
@@ -131,9 +125,10 @@ class AzureSpeechConfig:
 
     def start_streaming(self):
         self.translation_recognizer.start_continuous_recognition()
+        print("start_streaming...")
 
     def stop_streaming(self):
         self.translation_recognizer.stop_continuous_recognition()
 
-    def set_completed_translation_callback(self, callback):
-        self.complete_translation_view_callback = callback
+    def get_completed_translation_buffer(self):
+        return self.completed_translation_buffer

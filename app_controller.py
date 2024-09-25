@@ -95,14 +95,6 @@ class AppController:
     def on_create_account(self, email, username, password):
         self.auth_model.register_user(email, username, password)
         self.launch_login_view()
-      
-    def on_display_completed_translation(self):
-        current_time = time.strftime("%H:%M:%S")    
-        input_lang_code = self.settings.languages['input']
-        output_lang_code = self.settings.languages['output']
-        input_translation = self.azure_speech_translate_api.get_recognized_translations(input_lang_code)
-        output_translation = self.azure_speech_translate_api.get_recognized_translations(output_lang_code)
-        self.azure_speech_translate_api.save_translations(current_time, input_translation, output_translation)
 
     def logout(self):
         pass

@@ -1,6 +1,6 @@
 import difflib
 
-class PartialSpeechTranslationSegment:
+class PartialSpeechTranslationBuffer:
     def __init__(self):
         self.recognizing_buffer = None
         
@@ -59,3 +59,15 @@ class PartialSpeechTranslationSegment:
     
     def get_recognizing_event_counter(self) -> int:
         return self.recognizing_event_counter
+    
+     # Used for partial (recognizing) translations
+    def get_next_transcription(self, language_code):
+        if language_code in self.observable_buffer and self.current_pointer[language_code] < len(self.observable_buffer[language_code]):
+            transcription = self.observable_buffer[language_code][self.current_pointer[language_code]]
+            self.current_pointer[language_code] += 1
+            return transcription
+        return None
+    
+    def get_recognizing_translations(self, language):
+        translations = self.observable_buffer.get(language, [""])
+        return translations if translations else ""

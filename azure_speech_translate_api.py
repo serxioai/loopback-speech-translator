@@ -9,33 +9,25 @@ import threading
 import os
 import uuid
 from azure_speech_config import AzureSpeechConfig
-from complete_speech_translation_buffer import CompleteSpeechTranslationBuffer
 
 class AzureSpeechTranslateAPI:
-    def __init__(self, event_manager, azure_speech_config):
-        self.event_manager = event_manager
-        self.azure_speech_config = azure_speech_config
+    def __init__(self, user_id, db_manager):
+        self.user_id = user_id
+        self.db_manager = db_manager
+        self.azure_speech_config = AzureSpeechConfig()
 
     def start_streaming(self, encoded_session_data):
         self.azure_speech_config.set_azure_speech_settings(encoded_session_data)
         self.azure_speech_config.start_streaming()
-        self.event_manager.emit('streaming_started')
 
     def stop_streaming(self):
         self.azure_speech_config.stop_streaming()
-        self.event_manager.emit('streaming_stopped')
 
     def get_source_language(self):
         return self.azure_speech_config.speech_recognition_language
     
     def get_target_language(self):
         return self.azure_speech_config.output_languages
-    
-    def get_source_translation(self):
-        return self.complete_speech_translation_buffer.get_source_translation()
-    
-    def get_target_translation(self):
-        return self.complete_speech_translation_buffer.get_target_translation()
     
     def get_languages(self):
         return self.azure_speech_config.languages
@@ -52,11 +44,8 @@ class AzureSpeechTranslateAPI:
     def set_complete_translation_callback(self, callback):
         self.complete_translation_callback = callback
     
-    def get_completed_translation(self):
-        return self.complete_speech_translation_buffer
-    
-    def set_recognizing_callback(self, callback):
-        self.recognizing_callback = callback
+    def get_completed_translation_buffer(self):
+        return self.azure_speech_config.get_completed_translation_buffer()
 
     def detect_language(self, evt):
 
@@ -83,27 +72,7 @@ class AzureSpeechTranslateAPI:
         if args.reason == speechsdk.CancellationReason.Error and self.should_reconnect:
             print("Error during session, attempting to reconnect...")
             self.connect()
-    
-    # Used for partial (recognizing) translations
-    def get_next_transcription(self, language_code):
-        if language_code in self.observable_buffer and self.current_pointer[language_code] < len(self.observable_buffer[language_code]):
-            transcription = self.observable_buffer[language_code][self.current_pointer[language_code]]
-            self.current_pointer[language_code] += 1
-            return transcription
-        return None
 
-    # Used for completed (recognized) translations
-    def get_recognized_translations(self, language):
-        translations = self.complete_speech_translation_buffer.get(language, [""])
-        return translations[-1] if translations else ""
-    
-    def get_recognizing_translations(self, language):
-        translations = self.observable_buffer.get(language, [""])
-        return translations if translations else ""
-
-    def set_recognized_translation(self, language, translation):
-            if language in self.buffers:
-                self.recognized_buffer[language] = [translation]
 
     def save_translations(self, timestamp, input_transcription, output_translation):
 
