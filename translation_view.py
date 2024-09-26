@@ -71,8 +71,8 @@ class TranslationView(tk.Frame, Observer):
         self.right_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
         # Translation display windows
-        self.source_language_text = tk.Text(self, bg="white", font=display_font)
-        self.target_language_text = tk.Text(self, bg="white", font=display_font)
+        self.source_language_text = tk.Text(self, bg="white", font=display_font, wrap="word")
+        self.target_language_text = tk.Text(self, bg="white", font=display_font, wrap="word")
 
         # Place the text widgets in the frames
         self.source_language_text.grid(row=1, column=0, sticky="nsew", padx=1, pady=1)
@@ -122,9 +122,9 @@ class TranslationView(tk.Frame, Observer):
             if translations:
                 latest_translation = translations[-1]
                 if lang == language_options[self.source_language_option.get()]:
-                    self.source_language_text.insert(tk.END, latest_translation + '\n')
+                    self.source_language_text.insert("1.0", latest_translation + '\n')
                 elif lang == language_options[self.target_language_option.get()]    :
-                    self.target_language_text.insert(tk.END, latest_translation + '\n')
+                    self.target_language_text.insert("1.0", latest_translation + '\n')
 
     def clear_screen(self): 
         self.translated_languages.delete(1.0, tk.END)
