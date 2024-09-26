@@ -114,6 +114,7 @@ class AzureSpeechConfig:
 
     def completed_result(self, evt):
         translations = evt.result.translations
+        print(translations)
         if translations:
             self.completed_translation_buffer.update(translations)
 
