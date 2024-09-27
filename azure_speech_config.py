@@ -103,16 +103,11 @@ class AzureSpeechConfig:
     
     def event_signal_recognizing(self, evt):
         translations = evt.result.translations
-        print("RECOGNIZING:", translations)
-        self.recognizing_event_counter += 1
-
-        # Put the newest translation into the observable buffer
-        for lang, text in translations.items():
-            self.event_signal_buffer.update(lang, text, "RECOGNIZING")     
+        if translations:
+            self.event_signal_buffer.update(translations, "RECOGNIZING")     
 
     def event_signal_recognized(self, evt):
         translations = evt.result.translations
-        print("RECOGNIZED:", translations)
         if translations:
             self.event_signal_buffer.update(translations, "RECOGNIZED")
 
