@@ -3,7 +3,7 @@ import difflib
 
 class Observer(ABC):
     @abstractmethod
-    def update(self, data):
+    def update_display(self, data, reason):
         pass 
 
 class EventSignalBuffer:
@@ -26,22 +26,23 @@ class EventSignalBuffer:
         if reason == "RECOGNIZING":
             for language, translation in translations.items():
                 self.synthesize_recognizing_translation(language, translation)
-                self.buffer[language].append(self.get_next_translation(language))
-                print("RECOGNIZING BUFFER:", self.buffer)
+                translation = self.get_next_synthesized_translation(language)
+                self.buffer[language].append(translation)
+                print("RECOGNIZING: {}".format(self.buffer))
         elif reason == "RECOGNIZED":
+            self.buffer = {lang: [] for lang in self.buffer.keys()}
             for language, translation in translations.items():
                 if language in self.buffer:
                     self.buffer[language].append(translation)   
-                    print("RECOGNIZED BUFFER:", self.buffer)
-            
-        self._notify()
+                print("RECOGNIZED: {}".format(self.buffer))
+        self._notify(reason)
 
     def attach(self, observer):
         self._observers.append(observer)
 
-    def _notify(self):
+    def _notify(self, reason):
         for observer in self._observers:
-            observer.update(self.buffer)
+            observer.update_display(self.buffer, reason)
 
     def synthesize_recognizing_translation(self, language_code, translation):
          # Check if language_code exists in the buffers
@@ -82,9 +83,9 @@ class EventSignalBuffer:
         # Update the comparison_buffer for the language
         self.comparison_buffer[language_code] = translation    
 
-    def get_next_translation(self, language_code):
+    def get_next_synthesized_translation(self, language_code):
         if language_code in self.observable_buffer and self.current_pointer[language_code] < len(self.observable_buffer[language_code]):
-            transcription = self.observable_buffer[language_code][self.current_pointer[language_code]]
+            translation = self.observable_buffer[language_code][self.current_pointer[language_code]]
             self.current_pointer[language_code] += 1
-            return transcription
+            return translation
         return None    

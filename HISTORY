@@ -1,5 +1,35 @@
 CHECKOUT: 7d27cd95a828d4df5a64836d6c6465ea1545ce47
 
+
+------------------translation_view.py-------------------------
+
+def display_recognizing_text(self, language, text_widget):
+
+        # Clear the text widget
+        text_widget.delete(1.0, tk.END)
+
+        # Fetch translations for the given language
+        translations = self.current_session.get_next_transcription(language)
+        
+        i = 0
+        while i < len(translations):
+            if translations[i] == '+' and i < len(translations) - 1:
+                # Insert the next character after '+'
+                text_widget.insert(tk.END, translations[i + 1])
+                # Highlight the character
+                text_widget.tag_add("highlight", f"{tk.END} - 2c", tk.END)
+                i += 2  # Move past the '+' and the character
+            else:
+                # Insert other characters normally
+                text_widget.insert(tk.END, translations[i])
+                i += 1
+
+        # Highlight text setup (if not already configured elsewhere)
+        text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
+
+
+-----------------------speech_session.py------------------------
+
 from turtle import done
 import azure.cognitiveservices.speech as speechsdk
 import os

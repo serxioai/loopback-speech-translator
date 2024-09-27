@@ -114,14 +114,76 @@ class TranslationView(tk.Frame, Observer):
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (self.login_window.winfo_height() // 2)
         self.login_window.geometry(f"+{x}+{y}")
 
-    def update(self, data):
+    # text_widget.see(tk.END) for continuous scrolling
+
+    def update_display(self, data, reason):
         for lang, translations in data.items():
-            if translations:
-                latest_translation = translations[-1]
-                if lang == language_options[self.source_language_option.get()]:
-                    self.source_language_text.insert("1.0", latest_translation + '\n')
-                elif lang == language_options[self.target_language_option.get()]    :
-                    self.target_language_text.insert("1.0", latest_translation + '\n')
+            # Determine which text widget to use
+            if lang == language_options[self.source_language_option.get()]:
+                text_widget = self.source_language_text
+            elif lang == language_options[self.target_language_option.get()]:
+                text_widget = self.target_language_text
+            else:
+                continue  # Skip if the language doesn't match source or target
+
+            if reason == "RECOGNIZING":
+                # Get the current content of the first line (this includes previously concatenated text)
+                current_text = text_widget.get("1.0", tk.END).strip()
+
+                # Initialize processed_text and highlight indices
+                processed_text = ""
+                highlight_indices = []
+                current_position = len(current_text)  # Start position for new text is at the end of current content
+
+                # Process each string in the list
+                for translation in translations:
+                    i = 0
+                    while i < len(translation):
+                        if translation[i] == '+' and i < len(translation) - 1:
+                            processed_text += translation[i + 1]  # Add the character after the '+'
+                            highlight_indices.append(current_position)  # Track position for highlighting
+                            current_position += 1
+                            i += 2  # Skip the '+' and the next character
+                        else:
+                            processed_text += translation[i]
+                            current_position += 1
+                            i += 1
+
+                # Append the new RECOGNIZING text to the current content without re-adding the previous text
+                final_recognizing_text = current_text + " " + processed_text if current_text else processed_text
+
+                # Update the first line of the text widget with the new content
+                text_widget.delete("1.0", "2.0")  # Clear the first line where RECOGNIZING text is displayed
+                text_widget.insert("1.0", final_recognizing_text + '\n')  # Insert the new concatenated sentence
+
+                # Apply highlighting to the newly added content
+                for index in highlight_indices:
+                    text_widget.tag_add("highlight", f"1.{index}", f"1.{index + 1}")
+
+                # Configure the highlight style (blue background for the highlighted letters)
+                text_widget.tag_configure("highlight", background="#C9E2FF")
+
+            elif reason == "RECOGNIZED":
+                # Process recognized text similarly to remove '+' signs
+                processed_text = ""
+                i = 0
+                for translation in translations:
+                    while i < len(translation):
+                        if translation[i] == '+' and i < len(translation) - 1:
+                            processed_text += translation[i + 1]  # Add the character after the '+'
+                            i += 2  # Skip the '+' and the next character
+                        else:
+                            processed_text += translation[i]
+                            i += 1
+
+                # Insert RECOGNIZED text below the RECOGNIZING content (at the end of the widget)
+                text_widget.insert(tk.END, processed_text + '\n')
+
+            # Ensure the widget updates immediately
+            text_widget.update_idletasks()
+
+            
+
 
     def clear_screen(self): 
         self.translated_languages.delete(1.0, tk.END)
@@ -168,26 +230,4 @@ class TranslationView(tk.Frame, Observer):
 
         return translated_languages
 
-    def on_display_partial_translation(self, language, text_widget):
-
-        # Clear the text widget
-        text_widget.delete(1.0, tk.END)
-
-        # Fetch translations for the given language
-        translations = self.current_session.get_next_transcription(language)
-        
-        i = 0
-        while i < len(translations):
-            if translations[i] == '+' and i < len(translations) - 1:
-                # Insert the next character after '+'
-                text_widget.insert(tk.END, translations[i + 1])
-                # Highlight the character
-                text_widget.tag_add("highlight", f"{tk.END} - 2c", tk.END)
-                i += 2  # Move past the '+' and the character
-            else:
-                # Insert other characters normally
-                text_widget.insert(tk.END, translations[i])
-                i += 1
-
-        # Highlight text setup (if not already configured elsewhere)
-        text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
+       
