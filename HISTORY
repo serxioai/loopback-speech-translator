@@ -1,3 +1,5 @@
+CHECKOUT: 7d27cd95a828d4df5a64836d6c6465ea1545ce47
+
 from turtle import done
 import azure.cognitiveservices.speech as speechsdk
 import os
