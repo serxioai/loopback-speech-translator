@@ -2,7 +2,8 @@ import difflib
 
 class PartialSpeechTranslationBuffer:
     def __init__(self):
-        self.recognizing_buffer = None
+        self.recognizing_buffer = {}
+        self._observers = []
         
         # Counter to keep track of the number of recognizing events
         self.recognizing_event_counter = 0

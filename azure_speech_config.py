@@ -1,7 +1,6 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
-import completed_speech_translation_buffer as completed_speech_translation_buffer
-import partial_speech_translation_buffer as partial_speech_translation_buffer
+import event_signal_buffer as event_signal_buffer
 
 SUBSCRIPTION_KEY = os.environ.get("AZURE_KEY")
 SERVICE_REGION = os.environ.get("AZURE_REGION")
@@ -22,8 +21,7 @@ class AzureSpeechConfig:
         self.target_language = None
         self.detectable_languages = None  
         self.selected_audio_source = None
-        self.partial_translation = partial_speech_translation_buffer.PartialSpeechTranslationBuffer()
-        self.completed_translation_buffer = completed_speech_translation_buffer.CompletedSpeechTranslationBuffer()
+        self.event_signal_buffer = event_signal_buffer.EventSignalBuffer()
 
     def set_azure_speech_settings(self, config_settings):
         self.languages = config_settings['translated_languages']
@@ -39,7 +37,7 @@ class AzureSpeechConfig:
         self.audio_config = self.set_audio_source()
         self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=self.detectable_languages)
         self.translation_recognizer = self.init_translation_recognizer()
-        self.completed_translation_buffer.init_buffer(self.output_languages)
+        self.event_signal_buffer.init_buffer(self.output_languages)
         # TODO implement partial translation buffer
         self.set_event_callbacks()
 
@@ -77,11 +75,11 @@ class AzureSpeechConfig:
     def set_event_callbacks(self):
         
         self.translation_recognizer.recognized.connect(
-            lambda evt: self.completed_result(evt))
+            lambda evt: self.event_signal_recognized(evt))
 
         self.translation_recognizer.recognizing.connect(
-            lambda evt: self.partial_result(evt))
-                
+            lambda evt: self.event_signal_recognizing(evt))
+        
         self.translation_recognizer.session_started.connect(
             lambda evt: self.session_started_result(evt))
 
@@ -103,20 +101,20 @@ class AzureSpeechConfig:
     def get_output_languages(self):
         return self.output_languages
     
-    def partial_result(self, evt):
+    def event_signal_recognizing(self, evt):
         translations = evt.result.translations
-
+        print("RECOGNIZING:", translations)
         self.recognizing_event_counter += 1
 
         # Put the newest translation into the observable buffer
         for lang, text in translations.items():
-            self.partial_translation.update(lang, text)     
+            self.event_signal_buffer.update(lang, text, "RECOGNIZING")     
 
-    def completed_result(self, evt):
+    def event_signal_recognized(self, evt):
         translations = evt.result.translations
-        print(translations)
+        print("RECOGNIZED:", translations)
         if translations:
-            self.completed_translation_buffer.update(translations)
+            self.event_signal_buffer.update(translations, "RECOGNIZED")
 
     def canceled(self, evt):
         pass
@@ -125,11 +123,12 @@ class AzureSpeechConfig:
         pass
 
     def start_streaming(self):
-        self.translation_recognizer.start_continuous_recognition()
-        print("start_streaming...")
+        self.translation_recognizer.start_continuous_recognition_async()
+        print("start streaming...")
 
     def stop_streaming(self):
-        self.translation_recognizer.stop_continuous_recognition()
+        self.translation_recognizer.stop_continuous_recognition_async()
+        print("stopping stream...")
 
     def get_completed_translation_buffer(self):
         return self.completed_translation_buffer

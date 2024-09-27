@@ -2,12 +2,10 @@
 
 import tkinter as tk
 from tkinter import font as tkfont
-from tkinter.font import Font
 from tkinter import ttk
 from login_view import LoginView
 from tkinter import messagebox
-from completed_speech_translation_buffer import Observer, CompletedSpeechTranslationBuffer
-import time
+from event_signal_buffer import EventSignalBuffer, Observer
 
 # TODO: move this to a config file
 language_options = {
@@ -31,10 +29,9 @@ class TranslationView(tk.Frame, Observer):
         self.logged_in_status = logged_in_status
         self.azure_speech_translate_api = azure_speech_translate_api
         self.settings = settings
-        
-         # Get the shared CompletedSpeechTranslationBuffer
-        self.completed_translation_buffer = azure_speech_translate_api.get_completed_translation_buffer()
-        self.completed_translation_buffer.attach(self)
+
+        self.event_signal_buffer = azure_speech_translate_api.get_event_signal_buffer()
+        self.event_signal_buffer.attach(self)
         
         # Ensure the frame expands
         self.grid(sticky="nsew")
@@ -93,7 +90,7 @@ class TranslationView(tk.Frame, Observer):
         self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_streaming)
         self.start_button.grid(row=0, column=0, padx=10, pady=5)
 
-        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.azure_speech_translate_api.stop_streaming)
+        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_streaming)
         self.stop_button.grid(row=0, column=1, padx=10, pady=5)
 
         if not self.logged_in_status:
@@ -151,6 +148,9 @@ class TranslationView(tk.Frame, Observer):
             self.azure_speech_translate_api.start_streaming(session_data)
 
             return session_data
+
+    def stop_streaming(self):
+        self.azure_speech_translate_api.stop_streaming()
 
     def validate_language_selection(self, source_lang, target_lang):
         if source_lang == target_lang:

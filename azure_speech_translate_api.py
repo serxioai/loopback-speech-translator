@@ -41,11 +41,9 @@ class AzureSpeechTranslateAPI:
     def get_output_languages(self) -> tuple[str, str]:
         return self.azure_speech_config.output_languages
     
-    def set_complete_translation_callback(self, callback):
-        self.complete_translation_callback = callback
     
-    def get_completed_translation_buffer(self):
-        return self.azure_speech_config.get_completed_translation_buffer()
+    def get_event_signal_buffer(self):
+        return self.azure_speech_config.event_signal_buffer
 
     def detect_language(self, evt):
 
@@ -60,7 +58,6 @@ class AzureSpeechTranslateAPI:
         else:
             print("No language detected.")
         
-
     def get_translation_recognizer(self):
         return self.translation_recognizer
 
