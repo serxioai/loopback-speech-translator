@@ -22,19 +22,18 @@ class EventSignalBuffer:
             # Dictionary to hold the result from the recognized events
             self.buffer = {lang: [] for lang in languages}
 
-    def update(self, translations, reason):
-        if reason == "RECOGNIZING":
-            for language, translation in translations.items():
-                self.synthesize_recognizing_translation(language, translation)
-                translation = self.get_next_synthesized_translation(language)
-                self.buffer[language].append(translation)
-                print("RECOGNIZING: {}".format(self.buffer))
+    def update(self, lang, translation, reason):
+        if reason == "RECOGNIZING":            
+            self.synthesize_recognizing_translation(lang, translation)
+            translation = self.get_next_synthesized_translation(lang)
+            self.buffer[lang].append(translation)
+            print("RECOGNIZING: {}".format(self.buffer))
         elif reason == "RECOGNIZED":
             self.buffer = {lang: [] for lang in self.buffer.keys()}
-            for language, translation in translations.items():
-                if language in self.buffer:
-                    self.buffer[language].append(translation)   
-                print("RECOGNIZED: {}".format(self.buffer))
+            if lang in self.buffer:
+                self.buffer[lang].append(translation)   
+            print("RECOGNIZED: {}".format(self.buffer))
+        
         self._notify(reason)
 
     def attach(self, observer):

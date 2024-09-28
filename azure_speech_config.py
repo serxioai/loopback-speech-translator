@@ -102,14 +102,14 @@ class AzureSpeechConfig:
         return self.output_languages
     
     def event_signal_recognizing(self, evt):
-        translations = evt.result.translations
-        if translations:
-            self.event_signal_buffer.update(translations, "RECOGNIZING")     
+        translations = evt.result.translations        
+        for lang, translation in translations.items():
+            self.event_signal_buffer.update(lang, translation, "RECOGNIZING")  
 
     def event_signal_recognized(self, evt):
         translations = evt.result.translations
-        if translations:
-            self.event_signal_buffer.update(translations, "RECOGNIZED")
+        for lang, translation in translations.items():
+            self.event_signal_buffer.update(lang, translation, "RECOGNIZED")
 
     def canceled(self, evt):
         pass
