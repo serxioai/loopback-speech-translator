@@ -5,7 +5,8 @@ from tkinter import font as tkfont
 from tkinter import ttk
 from login_view import LoginView
 from tkinter import messagebox
-from event_signal_buffer import EventSignalBuffer, Observer
+from recognizing_event_signal_buffer import RecognizingBufferObserver
+from recognized_event_signal_buffer import RecognizedBufferObserver
 
 # TODO: move this to a config file
 language_options = {
@@ -18,7 +19,7 @@ language_options = {
 detectable_languages = ["en-US", "es-MX"]
 speech_recognition_language = "en-US"
 
-class TranslationView(tk.Frame, Observer):
+class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObserver):
     def __init__(self, 
                  root, 
                  logged_in_status,
@@ -30,8 +31,11 @@ class TranslationView(tk.Frame, Observer):
         self.azure_speech_translate_api = azure_speech_translate_api
         self.settings = settings
 
-        self.event_signal_buffer = azure_speech_translate_api.get_event_signal_buffer()
-        self.event_signal_buffer.attach(self)
+        # Watch the buffers for changes
+        self.recognizing_event_buffer = azure_speech_translate_api.get_recognizing_event_buffer()
+        self.recognizing_event_buffer.attach(self)
+        self.recognized_event_buffer = azure_speech_translate_api.get_recognized_event_buffer()
+        self.recognized_event_buffer.attach(self)
         
         # Ensure the frame expands
         self.grid(sticky="nsew")
@@ -116,8 +120,9 @@ class TranslationView(tk.Frame, Observer):
 
     # text_widget.see(tk.END) for continuous scrolling
 
-    def update_display(self, data, reason):
-        for lang, translations in data.items():
+    def update_recognizing_event_display(self, output_dict):
+        print("OUTPUT_DICT: {}".format(output_dict))
+        for lang, translation in output_dict.items():
             # Determine which text widget to use
             if lang == language_options[self.source_language_option.get()]:
                 text_widget = self.source_language_text
@@ -126,64 +131,33 @@ class TranslationView(tk.Frame, Observer):
             else:
                 continue  # Skip if the language doesn't match source or target
 
-            if reason == "RECOGNIZING":
-                # Get the current content of the first line (this includes previously concatenated text)
-                current_text = text_widget.get("1.0", tk.END).strip()
+             # Clear the text widget
+            text_widget.delete(1.0, tk.END)
 
-                # Initialize processed_text and highlight indices
-                processed_text = ""
-                highlight_indices = []
-                current_position = len(current_text)  # Start position for new text is at the end of current content
-
-                # Process each string in the list
-                for translation in translations:
-                    i = 0
-                    while i < len(translation):
-                        if translation[i] == '+' and i < len(translation) - 1:
-                            processed_text += translation[i + 1]  # Add the character after the '+'
-                            highlight_indices.append(current_position)  # Track position for highlighting
-                            current_position += 1
-                            i += 2  # Skip the '+' and the next character
-                        else:
-                            processed_text += translation[i]
-                            current_position += 1
-                            i += 1
-
-                # Append the new RECOGNIZING text to the current content without re-adding the previous text
-                final_recognizing_text = current_text + " " + processed_text if current_text else processed_text
-
-                # Update the first line of the text widget with the new content
-                text_widget.delete("1.0", "2.0")  # Clear the first line where RECOGNIZING text is displayed
-                text_widget.insert("1.0", final_recognizing_text + '\n')  # Insert the new concatenated sentence
-
-                # Apply highlighting to the newly added content
-                for index in highlight_indices:
-                    text_widget.tag_add("highlight", f"1.{index}", f"1.{index + 1}")
-
-                # Configure the highlight style (blue background for the highlighted letters)
-                text_widget.tag_configure("highlight", background="#C9E2FF")
-
-            elif reason == "RECOGNIZED":
-                # Process recognized text similarly to remove '+' signs
-                processed_text = ""
+            for language, translation in output_dict.items():
                 i = 0
-                for translation in translations:
-                    while i < len(translation):
-                        if translation[i] == '+' and i < len(translation) - 1:
-                            processed_text += translation[i + 1]  # Add the character after the '+'
-                            i += 2  # Skip the '+' and the next character
-                        else:
-                            processed_text += translation[i]
-                            i += 1
+                while i < len(translation):
+                    if translation[i] == '+' and i < len(translation) - 1:
+                        # Insert the next character after '+'
+                        text_widget.insert(tk.END, translation[i + 1])
+                        # Highlight the character
+                        text_widget.tag_add("highlight", f"{tk.END} - 2c", tk.END)
+                        i += 2  # Move past the '+' and the character
+                    else:
+                        # Insert other characters normally
+                        text_widget.insert(tk.END, translation[i])
+                        i += 1
 
-                # Insert RECOGNIZED text below the RECOGNIZING content (at the end of the widget)
-                text_widget.insert(tk.END, processed_text + '\n')
+            # Highlight text setup (if not already configured elsewhere)
+            text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
 
-            # Ensure the widget updates immediately
-            text_widget.update_idletasks()
-
-            
-
+    def update_recognized_event_display(self, translations):
+        for lang, translation in translations.items():
+            # Determine which text widget to use
+            if lang == language_options[self.source_language_option.get()]:
+                text_widget = self.source_language_text
+            elif lang == language_options[self.target_language_option.get()]:
+                text_widget = self.target_language_text
 
     def clear_screen(self): 
         self.translated_languages.delete(1.0, tk.END)

@@ -40,10 +40,12 @@ class AzureSpeechTranslateAPI:
     
     def get_output_languages(self) -> tuple[str, str]:
         return self.azure_speech_config.output_languages
-    
-    
-    def get_event_signal_buffer(self):
-        return self.azure_speech_config.event_signal_buffer
+
+    def get_recognizing_event_buffer(self):
+        return self.azure_speech_config.recognizing_event_buffer
+
+    def get_recognized_event_buffer(self):
+        return self.azure_speech_config.recognized_event_buffer
 
     def detect_language(self, evt):
 
