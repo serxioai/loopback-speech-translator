@@ -123,10 +123,9 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
     def update_recognizing_event_display(self, output_dict):
         print("output_dict: ", output_dict)
         for lang, translations in output_dict.items():
-            print(f"Processing language: {lang}, translations: {translations}")
+            
             source_lang_code = language_options.get(self.source_language_option.get())
             target_lang_code = language_options.get(self.target_language_option.get())
-            print(f"Source language code: {source_lang_code}, Target language code: {target_lang_code}")
 
             # Determine which text widget to use
             if lang == source_lang_code:
@@ -138,7 +137,6 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             
             # Clear the text widget
             text_widget.delete(1.0, tk.END)
-            print(f"Cleared text widget for language: {lang}")
 
             for translation in translations:
                 i = 0
