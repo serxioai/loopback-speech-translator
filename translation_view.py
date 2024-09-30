@@ -121,20 +121,26 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
     # text_widget.see(tk.END) for continuous scrolling
 
     def update_recognizing_event_display(self, output_dict):
-        print("OUTPUT_DICT: {}".format(output_dict))
-        for lang, translation in output_dict.items():
+        print("output_dict: ", output_dict)
+        for lang, translations in output_dict.items():
+            print(f"Processing language: {lang}, translations: {translations}")
+            source_lang_code = language_options.get(self.source_language_option.get())
+            target_lang_code = language_options.get(self.target_language_option.get())
+            print(f"Source language code: {source_lang_code}, Target language code: {target_lang_code}")
+
             # Determine which text widget to use
-            if lang == language_options[self.source_language_option.get()]:
+            if lang == source_lang_code:
                 text_widget = self.source_language_text
-            elif lang == language_options[self.target_language_option.get()]:
+            elif lang == target_lang_code:
                 text_widget = self.target_language_text
             else:
                 continue  # Skip if the language doesn't match source or target
-
-             # Clear the text widget
+            
+            # Clear the text widget
             text_widget.delete(1.0, tk.END)
+            print(f"Cleared text widget for language: {lang}")
 
-            for language, translation in output_dict.items():
+            for translation in translations:
                 i = 0
                 while i < len(translation):
                     if translation[i] == '+' and i < len(translation) - 1:
@@ -152,16 +158,13 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
 
     def update_recognized_event_display(self, translations):
-        for lang, translation in translations.items():
-            # Determine which text widget to use
-            if lang == language_options[self.source_language_option.get()]:
-                text_widget = self.source_language_text
-            elif lang == language_options[self.target_language_option.get()]:
-                text_widget = self.target_language_text
-
-    def clear_screen(self): 
-        self.translated_languages.delete(1.0, tk.END)
-        self.detected_languages_text.delete(1.0, tk.END)
+        pass
+        # for lang, translation in translations.items():
+        #     # Determine which text widget to use
+        #     if lang == language_options[self.source_language_option.get()]:
+        #         text_widget = self.source_language_text
+        #     elif lang == language_options[self.target_language_option.get()]:
+        #         text_widget = self.target_language_text
     
     def start_streaming(self):
         source_lang = self.source_language_option.get()

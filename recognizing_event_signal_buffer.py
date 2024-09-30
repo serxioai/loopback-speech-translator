@@ -32,14 +32,6 @@ class RecognizingEventSignalBuffer:
             if translation:
                 self.buffer[lang].append(translation)
         self._notify()
-        #print("OUTPUT_DICT: {}".format(output_dict))
-        # for lang, tran slation in translations_dict.items():
-        #     synthesized_translation = self.get_synthesized_translation(lang)
-        #     if lang not in self.buffer:
-        #         self.buffer[lang] = []
-        #     if synthesized_translation:
-        #         self.buffer[lang].append(synthesized_translation)
-        # self._notify()
 
     def attach(self, observer):
         self._observers.append(observer)
@@ -92,6 +84,13 @@ class RecognizingEventSignalBuffer:
 
             # Update the comparison_buffer for the language
             self.comparison_buffer[language_code] = current_transcription
+
+            # Retrieve the correct segment from the observable buffer
+            if self.current_pointer[language_code] < len(self.observable_buffer[language_code]):
+                translation = self.observable_buffer[language_code][self.current_pointer[language_code]]
+                self.current_pointer[language_code] += 1
+                output_dict[language_code] = translation
+                print("SYNTHESIZED: ", output_dict[language_code])
 
         return output_dict  
 
