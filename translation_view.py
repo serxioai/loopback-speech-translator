@@ -196,9 +196,9 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             lines = translation.split('\n')
             for i, line in enumerate(lines):
                 if i % 2 == 0:
-                    text_widget.insert(tk.END, f"{line}\n", ("gray_bg",))
+                    text_widget.insert("1.0", f"{line}\n", ("gray_bg",))
                 else:
-                    text_widget.insert(tk.END, f"{line}\n")
+                    text_widget.insert("1.0", f"{line}\n")
 
             # Configure the tag for gray background
             text_widget.tag_configure("gray_bg", background="#e6e6e6")
