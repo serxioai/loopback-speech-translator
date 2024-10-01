@@ -71,17 +71,29 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.right_dropdown.set("English (American)")
         self.right_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
 
-        # Translation display windows
-        self.source_language_text = tk.Text(self, bg="white", font=display_font, wrap="word")
-        self.target_language_text = tk.Text(self, bg="white", font=display_font, wrap="word")
+        # Translation display windows for history and realtime
+        self.source_language_text_history = tk.Text(self, bg="white", font=display_font, wrap="word")
+        self.target_language_text_history = tk.Text(self, bg="white", font=display_font, wrap="word")
+
+        self.source_language_realtime_text = tk.Text(self, bg="white", font=display_font, wrap="word")
+        self.target_language_realtime_text = tk.Text(self, bg="white", font=display_font, wrap="word")
 
         # Place the text widgets in the frames
-        self.source_language_text.grid(row=1, column=0, sticky="nsew", padx=1, pady=1)
-        self.target_language_text.grid(row=1, column=1, sticky="nsew", padx=1, pady=1)
+        self.source_language_realtime_text.grid(row=1, column=0, sticky="nsew", padx=1, pady=1)
+        self.target_language_realtime_text.grid(row=1, column=1, sticky="nsew", padx=1, pady=1)
+
+        self.source_language_text_history.grid(row=2, column=0, sticky="nsew", padx=1, pady=1)
+        self.target_language_text_history.grid(row=2, column=1, sticky="nsew", padx=1, pady=1)
+
+        # Add scrolling to the text widgets
+        self.source_language_text_history.see(tk.END)
+        self.target_language_text_history.see(tk.END)
+        self.source_language_realtime_text.see(tk.END)
+        self.target_language_realtime_text.see(tk.END)
 
         # Add a bar at the bottom
         self.bottom_bar = tk.Frame(self)
-        self.bottom_bar.grid(row=2, column=0, columnspan=2, sticky="ew")
+        self.bottom_bar.grid(row=3, column=0, columnspan=2, sticky="ew")
 
         # Configure grid columns for spacing
         self.bottom_bar.grid_columnconfigure(0, weight=1)
@@ -118,17 +130,15 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (self.login_window.winfo_height() // 2)
         self.login_window.geometry(f"+{x}+{y}")
 
-    # text_widget.see(tk.END) for continuous scrolling
-
     def update_recognizing_event_display(self, output_dict):
         for lang, translations in output_dict.items():
             source_lang_code = language_options.get(self.source_language_option.get())
             target_lang_code = language_options.get(self.target_language_option.get())
             # Determine which text widget to use
             if lang == source_lang_code:
-                text_widget = self.source_language_text
+                text_widget = self.source_language_realtime_text
             elif lang == target_lang_code:
-                text_widget = self.target_language_text
+                text_widget = self.target_language_realtime_text
             else:
                 continue  # Skip if the language doesn't match source or target
             
@@ -160,15 +170,12 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
                     i += 1
 
     def update_recognized_event_display(self, translations):
-        for lang, translation in translations.items():
-            print(f"lang: {lang}, translation: {translation}")
-            print(f"type of translation: {type(translation)}")
-        
+        for lang, translation in translations.items():        
             # Determine which text widget to use
             if lang == language_options[self.source_language_option.get()]:
-                text_widget = self.source_language_text
+                text_widget = self.source_language_text_history
             elif lang == language_options[self.target_language_option.get()]:
-                text_widget = self.target_language_text
+                text_widget = self.target_language_text_history
 
             # Clear the text widget
             text_widget.delete(1.0, tk.END)
