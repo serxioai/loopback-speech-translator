@@ -1,4 +1,15 @@
 # translation_view.py
+import configparser
+
+# Read settings from the settings.ini file
+config = configparser.ConfigParser()
+config.read('settings.ini')
+
+# Extract settings
+speech_detection_language = config.get('Settings', 'speech_detection_language', fallback='en-US')
+audio_source = config.get('Settings', 'audio_source', fallback='blackhole')
+logged_in_status = config.getboolean('Settings', 'logged_in_status', fallback=True)
+default_source_language = config.get('Settings', 'default_source_language', fallback='Spanish (Mexico)')
 
 import tkinter as tk
 from tkinter import font as tkfont
@@ -11,7 +22,7 @@ from recognized_event_signal_buffer import RecognizedBufferObserver
 # TODO: move this to a config file
 language_options = {
     'English (American)': 'en',
-    'Spanish': 'es',
+    'Spanish (Mexico)': 'es',
     'French': 'fr',
     'German': 'de'
 }
@@ -60,11 +71,11 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.grid_rowconfigure(3, weight=0)  # Bottom row for buttons
 
         # Language options
-        self.language_options = ["English (American)", "Spanish", "French", "German"]
+        self.language_options = ["English (American)", "Spanish (Mexico)", "French", "German"]
 
         # Left dropdown (source language)
         self.left_dropdown = ttk.Combobox(self, values=self.language_options, state='readonly', textvariable=self.source_language_option)
-        self.left_dropdown.set("Select source language")
+        self.left_dropdown.set(default_source_language)
         self.left_dropdown.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
 
         # Right dropdown (target language)
