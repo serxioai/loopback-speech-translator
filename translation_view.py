@@ -122,7 +122,6 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
 
     def update_recognizing_event_display(self, output_dict):
         for lang, translations in output_dict.items():
-            print(f"lang: {lang}, translations: {translations}")
             source_lang_code = language_options.get(self.source_language_option.get())
             target_lang_code = language_options.get(self.target_language_option.get())
             # Determine which text widget to use
@@ -161,13 +160,24 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
                     i += 1
 
     def update_recognized_event_display(self, translations):
-        pass
-        # for lang, translation in translations.items():
-        #     # Determine which text widget to use
-        #     if lang == language_options[self.source_language_option.get()]:
-        #         text_widget = self.source_language_text
-        #     elif lang == language_options[self.target_language_option.get()]:
-        #         text_widget = self.target_language_text
+        for lang, translation in translations.items():
+            print(f"lang: {lang}, translation: {translation}")
+            print(f"type of translation: {type(translation)}")
+        
+            # Determine which text widget to use
+            if lang == language_options[self.source_language_option.get()]:
+                text_widget = self.source_language_text
+            elif lang == language_options[self.target_language_option.get()]:
+                text_widget = self.target_language_text
+
+            # Clear the text widget
+            text_widget.delete(1.0, tk.END)
+
+            if isinstance(translation, list):
+                translation = ' '.join(translation)
+
+            # Insert the translation into the text widget
+            text_widget.insert(tk.END, translation)
     
     def start_streaming(self):
         source_lang = self.source_language_option.get()
