@@ -56,7 +56,8 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.grid_columnconfigure(1, weight=2)  # Right column
         self.grid_rowconfigure(0, weight=0)  # Top row for dropdowns
         self.grid_rowconfigure(1, weight=1)  # Middle row for text
-        self.grid_rowconfigure(2, weight=0)  # Bottom row for buttons
+        self.grid_rowconfigure(2, weight=1)  # Middle row for text
+        self.grid_rowconfigure(3, weight=0)  # Bottom row for buttons
 
         # Language options
         self.language_options = ["English (American)", "Spanish", "French", "German"]
@@ -181,10 +182,10 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             text_widget.delete(1.0, tk.END)
 
             if isinstance(translation, list):
-                translation = ' '.join(translation)
+                translation = '\n'.join(translation)
 
             # Insert the translation into the text widget
-            text_widget.insert(tk.END, translation)
+            text_widget.insert("1.0", f"{translation}")
     
     def start_streaming(self):
         source_lang = self.source_language_option.get()
