@@ -83,16 +83,13 @@ class AzureSpeechConfig:
             lambda evt: self.update_event_signal_recognizing(evt))
         
         self.translation_recognizer.session_started.connect(
-            lambda evt: self.session_started_result(evt))
+            lambda evt: self.start(evt))
 
         self.translation_recognizer.session_stopped.connect(
-            lambda evt: self.session_stopped(evt))
+            lambda evt: self.stopped(evt))
         
         self.translation_recognizer.canceled.connect(
             lambda evt: self.canceled(evt))
-
-        self.translation_recognizer.session_stopped.connect(
-            lambda evt: self.session_stopped(evt))
 
     def get_source_language(self):
         return self.source_language
@@ -105,18 +102,32 @@ class AzureSpeechConfig:
     
     def update_event_signal_recognizing(self, evt):
         translation_dict = evt.result.translations 
-        # print("RAW: {}".format(translation_dict))
         self.recognizing_event_buffer.update(translation_dict)  
 
     def update_event_signal_recognized(self, evt):
         translation_dict = evt.result.translations
         self.recognized_event_buffer.update(translation_dict)
 
+    def start(self, evt):
+        print("SESSION STARTED {}".format(evt))
+
+    def stopped(self, evt):
+        print("SESSION STOPPED {}".format(evt))
+
     def canceled(self, evt):
-        pass
+        if evt.reason == speechsdk.CancellationReason.Error:
+            print(f"Canceled: {evt.reason}")
+            print(f"SESSION STOPPED {}".format(evt))
+            self.reconnect()
 
     def reconnect(self):
-        pass
+        print("Attempting to reconnect...")
+        try:
+            self.translation_recognizer.stop_continuous_recognition_async()
+            self.translation_recognizer.start_continuous_recognition_async()
+            print("Reconnected successfully.")
+        except Exception as e:
+            print(f"Reconnection failed: {e}")
 
     def start_streaming(self):
         self.translation_recognizer.start_continuous_recognition_async()
@@ -126,5 +137,3 @@ class AzureSpeechConfig:
         self.translation_recognizer.stop_continuous_recognition_async()
         print("stopping stream...")
 
-    def get_completed_translation_buffer(self):
-        return self.completed_translation_buffer
