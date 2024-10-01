@@ -99,16 +99,13 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         # Configure grid columns for spacing
         self.bottom_bar.grid_columnconfigure(0, weight=1)
         self.bottom_bar.grid_columnconfigure(1, weight=1)
-        self.bottom_bar.grid_columnconfigure(2, weight=1)
-        self.bottom_bar.grid_columnconfigure(3, weight=1)
-        self.bottom_bar.grid_columnconfigure(4, weight=1)
 
         # Add "Start" and "Stop" buttons to the bottom bar
-        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_streaming)
-        self.start_button.grid(row=0, column=0, padx=10, pady=5)
+        self.start_button = tk.Button(self.bottom_bar, text='Start', command=self.start_streaming, height=2)
+        self.start_button.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
 
-        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_streaming)
-        self.stop_button.grid(row=0, column=1, padx=10, pady=5)
+        self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_streaming, height=2)
+        self.stop_button.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
 
         if not self.logged_in_status:
             self.start_button.config(state=tk.DISABLED)
