@@ -121,12 +121,10 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
     # text_widget.see(tk.END) for continuous scrolling
 
     def update_recognizing_event_display(self, output_dict):
-        print("output_dict: ", output_dict)
         for lang, translations in output_dict.items():
-            
+            print(f"lang: {lang}, translations: {translations}")
             source_lang_code = language_options.get(self.source_language_option.get())
             target_lang_code = language_options.get(self.target_language_option.get())
-
             # Determine which text widget to use
             if lang == source_lang_code:
                 text_widget = self.source_language_text
@@ -137,23 +135,30 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             
             # Clear the text widget
             text_widget.delete(1.0, tk.END)
-
-            for translation in translations:
-                i = 0
-                while i < len(translation):
-                    if translation[i] == '+' and i < len(translation) - 1:
-                        # Insert the next character after '+'
-                        text_widget.insert(tk.END, translation[i + 1])
-                        # Highlight the character
-                        text_widget.tag_add("highlight", f"{tk.END} - 2c", tk.END)
-                        i += 2  # Move past the '+' and the character
-                    else:
-                        # Insert other characters normally
-                        text_widget.insert(tk.END, translation[i])
-                        i += 1
-
-            # Highlight text setup (if not already configured elsewhere)
+            
+            # Configure highlighting tag before processing the translation
             text_widget.tag_configure("highlight", background="#C9E2FF")  # Pale blue color
+
+            # Iterate through the translation string
+            i = 0
+            while i < len(translations):
+                if translations[i] == '+' and i < len(translations) - 1:
+                    # Insert the next character after '+'
+                    char_to_insert = translations[i + 1]
+                    text_widget.insert(tk.END, char_to_insert)
+
+                    # Get the current position for the just-inserted character
+                    start_index = f"{text_widget.index(tk.END)} - 2c"
+                    end_index = text_widget.index(tk.END)
+
+                    # Highlight the character
+                    text_widget.tag_add("highlight", start_index, end_index)
+
+                    i += 2  # Move past the '+' and the next character
+                else:
+                    # Insert other characters normally
+                    text_widget.insert(tk.END, translations[i])
+                    i += 1
 
     def update_recognized_event_display(self, translations):
         pass
