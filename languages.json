@@ -1,0 +1,45 @@
+{
+    "languages": [
+      {
+        "name": "Spanish (Cuba)",
+        "language_code": "es",
+        "locale": "es-CU"
+      },
+      {
+        "name": "Spanish (Puerto Rico)",
+        "language_code": "es",
+        "locale": "es-PR"
+      },
+      {
+        "name": "Spanish (Mexico)",
+        "language_code": "es",
+        "locale": "es-MX"
+      },
+      {
+        "name": "Spanish (Guatemala)",
+        "language_code": "es",
+        "locale": "es-GT"
+      },
+      {
+        "name": "Spanish (Honduras)",
+        "language_code": "es",
+        "locale": "es-HN"
+      },
+      {
+        "name": "English (United States)",
+        "language_code": "en",
+        "locale": "en-US"
+      },
+      {
+        "name": "Tigrinya (Eritrea)",
+        "language_code": "ti",
+        "locale": "ti-ER"
+      },
+      {
+        "name": "Swahili (Kenya)",
+        "language_code": "sw",
+        "locale": "sw-KE"
+      }
+    ]
+  }
+  

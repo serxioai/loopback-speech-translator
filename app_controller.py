@@ -6,7 +6,7 @@ import os
 from translation_view import TranslationView
 from login_view import LoginView
 from auth_model import AuthModel
-from create_account import CreateAccount
+from create_account_view import CreateAccountView
 from auth_model import AuthModel
 import time
 from azure_speech_translate_api import AzureSpeechTranslateAPI
@@ -17,12 +17,10 @@ import urllib.parse as urlparse
 import configparser
 
 class AppController:
-    def __init__(self, root, db, settings):
+    def __init__(self, root, db, user_settings):
         self.root = root
         self.db = db
-        self.settings = settings
-        self.audio_source = settings["audio_source"]
-        self.speech_detection_language = settings["speech_detection_language"]
+        self.user_settings = user_settings
         self.user_id = None
         self.db_manager = db
         self.auth_model = AuthModel()
@@ -30,20 +28,16 @@ class AppController:
         self.current_session = None
         self.logged_in_status = False
         self.check_login_status()  # Call this instead of directly launching translation view
+        self.display_translation_view()
 
     def check_login_status(self):
         # Check if there's a stored user session
         stored_user_id = self.auth_model.get_stored_user_id()
         if stored_user_id:
             self.user_id = stored_user_id
-            self.logged_in_status = True
+            self.user_settings.set_logged_in_status(True)
         else:
-            self.logged_in_status = False
-        
-        # Update the settings.ini file
-        self.update_logged_in_status_in_settings(self.logged_in_status)
-        
-        self.launch_translation_view()
+            self.user_settings.set_logged_in_status(False)     
 
     def update_logged_in_status_in_settings(self, status):
         config = configparser.ConfigParser()
@@ -57,7 +51,7 @@ class AppController:
         with open('settings.ini', 'w') as configfile:
             config.write(configfile)
 
-    def launch_translation_view(self):
+    def display_translation_view(self):
         if self.current_view:
             self.current_view.destroy()
         
@@ -68,12 +62,11 @@ class AppController:
 
         TranslationView(
             self.root, 
-            self.logged_in_status,
             self.azure_speech_translate_api,
-            self.settings,
+            self.user_settings,
         )
 
-    def launch_login_view(self):
+    def display_login_view(self):
         LoginView(self.root, self.on_login, self.on_register)
         # No need to pack or grid the LoginView, as it's a Toplevel window
 
@@ -83,18 +76,18 @@ class AppController:
             user_id = str(user_doc["_id"])
             self.user_id = user_id
             self.auth_model.store_user_id(user_id)
-            self.launch_translation_view()
+            self.user_settings.set_logged_in_status(True)
+            self.display_translation_view()
         else:
             print("Authentication failed")
     
     def on_register(self):
-        self.clear_current_view()
-        self.current_view = CreateAccount(self.root, self.on_create_account)
+        self.current_view = CreateAccountView(self.root, self.on_create_account)
         self.current_view.pack(expand=True, fill=tk.BOTH)
 
     def on_create_account(self, email, username, password):
         self.auth_model.register_user(email, username, password)
-        self.launch_login_view()
+        self.display_login_view()
 
     def logout(self):
         pass

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-class CreateAccount(tk.Frame):
+class CreateAccountView(tk.Frame):
     def __init__(self, parent, create_account_callback):
         super().__init__(parent)
         self.create_account_callback = create_account_callback
