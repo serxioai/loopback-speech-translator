@@ -3,9 +3,10 @@ import json
 class UserSettings:
     def __init__(self):
         self.user_id = None
-        self.default_speech_detection_languages = None # Language code plus locale, i.e. en-US
+        self.default_detectable_languages = None # Language code plus locale, i.e. en-US
         self.default_speech_recognition_language = None # Language code plus locale, i.e. en-US
         self.default_source_language = None # Language code only
+        self.default_target_language = None # Language code only
         self.audio_source = None 
         self.logged_in_status = False
         self.premium_status = None
@@ -32,21 +33,21 @@ class UserSettings:
             # Extract settings
             self.speech_detection_languages = self.config.get('Settings', 'default_speech_detection_languages', fallback='en-US')
             self.audio_source = self.config.get('Settings', 'audio_source', fallback='blackhole')
+            self.default_target_language = self.config.get('Settings', 'default_target_language', fallback='English (United States)')
             self.logged_in_status = self.config.getboolean('Settings', 'logged_in_status', fallback=True)
             self.default_source_language = self.config.get('Settings', 'default_source_language', fallback='Spanish (Mexico)')
-            
+            self.default_speech_recognition_language = self.config.get('Settings', 'default_speech_recognition_language', fallback='en-US')
+            self.default_detectable_languages = self.config.get('Settings', 'default_detectable_languages', fallback='["en-US", "es-MX"]')
         except Exception as e:
             print(f"Error reading ini file: {e}")
     
     # Setters
+
+    def set_default_detectable_languages(self, languages):
+        languages_str = json.dumps(languages)  # Convert list to JSON string
+        self.write_ini('default_detectable_languages', languages_str)
+
     def set_default_source_language(self, language): # This is the translation language code without the locale, i.e. es
-        with open('languages.json', 'r') as f:
-            languages_data = json.load(f)
-            for lang in languages_data['languages']:
-                if lang['name'] == language:
-                    self.default_source_language = lang['language_code']
-                    self.write_ini('default_source_language', self.default_source_language)
-                    break
         self.write_ini('default_source_language', self.default_source_language)
     
     def set_default_speech_detection_languages(self, languages):
@@ -77,8 +78,11 @@ class UserSettings:
     def get_default_source_language(self):
         return self.default_source_language
     
-    def get_default_speech_detection_languages(self):
-        return self.default_speech_detection_languages
+    def get_default_target_language(self):
+        return self.default_target_language
+    
+    def get_default_detectable_languages(self):
+        return self.default_detectable_languages
     
     def get_default_speech_recognition_language(self):
         return self.default_speech_recognition_language

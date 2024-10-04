@@ -16,21 +16,19 @@ class AzureSpeechConfig:
         self.translated_languages = None
         self.speech_recognition_language = None
         self.languages = None  
-        self.output_languages = None  
-        self.input_languages = None
         self.source_language = None
         self.target_language = None
         self.detectable_languages = None  
         self.selected_audio_source = None
+        
+        # Buffers for recognizing and recognized events
         self.recognizing_event_buffer = recognizing_event_signal_buffer.RecognizingEventSignalBuffer()
         self.recognized_event_buffer = recognized_event_signal_buffer.RecognizedEventSignalBuffer()
 
     def set_azure_speech_settings(self, config_settings):
-        self.languages = config_settings['translated_languages']
-        self.output_languages = [lang for lang in config_settings['translated_languages'].values()] # format is ['en','es']
-        self.input_languages = config_settings['translated_languages']['source']
-        self.speech_recognition_language = config_settings['speech_rec_lang'] 
-        self.detectable_languages = config_settings['detectable_lang']
+        self.translated_languages = [config_settings['session_languages']['source']] # The UI shows source as the translated language
+        self.speech_recognition_language = str(config_settings['speech_rec_lang'])
+        self.detectable_languages = config_settings['detectable_lang'].split(',')
         self.selected_audio_source = config_settings['audio_source']
         self.build_connection()
 
@@ -39,16 +37,20 @@ class AzureSpeechConfig:
         self.audio_config = self.set_audio_source()
         self.auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(languages=self.detectable_languages)
         self.translation_recognizer = self.init_translation_recognizer()
-        self.recognizing_event_buffer.init_buffer(self.output_languages)
-        self.recognized_event_buffer.init_buffer(self.output_languages)
+        
+        # Initialize the buffers for the source and target languages
+        self.recognizing_event_buffer.init_buffer(self.translated_languages)
+        self.recognized_event_buffer.init_buffer(self.translated_languages)
+        
+        # Set the event callbacks for the translation recognizer
         self.set_event_callbacks()
 
     def init_speech_translation_config(self):
         speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
             subscription=SUBSCRIPTION_KEY,
             region=SERVICE_REGION,
-            speech_recognition_language= self.speech_recognition_language,
-            target_languages= self.output_languages
+            speech_recognition_language=self.speech_recognition_language,
+            target_languages=self.translated_languages
             )
 
         # Start and stop continuous recognition with Continuous LID

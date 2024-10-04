@@ -9,6 +9,7 @@ from tkinter import messagebox
 from recognizing_event_signal_buffer import RecognizingBufferObserver
 from recognized_event_signal_buffer import RecognizedBufferObserver
 from user_settings import UserSettings
+from languages import Languages
 import configparser
 
 class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObserver):
@@ -20,9 +21,13 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.root = root    
         self.azure_speech_translate_api = azure_speech_translate_api
         self.user_settings = user_settings
+        
         self.config = configparser.ConfigParser()
         self.config.read('settings.ini')
-        self.language_options = {}
+
+     # Initialize languages and language_options
+        self.languages = Languages()
+        self.language_options = self.languages.get_language_options()  
 
         # Watch the buffers for changes
         self.recognizing_event_buffer = azure_speech_translate_api.get_recognizing_event_buffer()
@@ -52,22 +57,19 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.grid_rowconfigure(2, weight=1)  # Middle row for text
         self.grid_rowconfigure(3, weight=0)  # Bottom row for buttons
 
-        # Load language options from languages.json
-        with open('languages.json', 'r') as f:
-            languages_data = json.load(f)
-            self.language_options = [lang['name'] for lang in languages_data['languages']]
-
         # Left dropdown (source language)
         self.source_language_dropdown = ttk.Combobox(self, state='readonly', textvariable=self.source_language_option)
-        self.source_language_dropdown['values'] = [lang['name'] for lang in languages_data['languages']]
+        self.source_language_dropdown['values'] = [lang['name'] for lang in self.language_options['languages']]
         self.source_language_dropdown.set(self.user_settings.get_default_source_language())
         self.source_language_dropdown.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         self.source_language_dropdown.bind("<<ComboboxSelected>>", self.update_default_source_language)
         
         # Right dropdown (target language)
-        self.right_dropdown = ttk.Combobox(self, values=self.language_options, state='readonly', textvariable=self.target_language_option)
-        self.right_dropdown.set("English (American)")
-        self.right_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        self.target_language_dropdown = ttk.Combobox(self, values=self.language_options, state='readonly', textvariable=self.target_language_option)
+        self.target_language_dropdown['values'] = [lang['name'] for lang in self.language_options['languages']]
+        self.target_language_dropdown.set(self.user_settings.get_default_target_language())
+        self.target_language_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        self.source_language_dropdown.bind("<<ComboboxSelected>>", self.update_default_target_language)
 
         # Translation display windows for history and realtime
         self.source_language_text_history = tk.Text(self, bg="white", font=display_font, wrap="word")
@@ -190,47 +192,61 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             text_widget.tag_configure("gray_bg", background="#e6e6e6")
     
     def start_streaming(self):
+        # Get the source and target languages from the dropdowns
         source_lang = self.source_language_option.get()
         target_lang = self.target_language_option.get()
+        
+        # Update settings.ini with the new source and target languages
+        self.update_default_detectable_languages(source_lang, target_lang)
+        
+        # Get the audio source from the user settings
         audio_source = self.user_settings.get_audio_source()
 
+        # Validate the language selection
         translated_languages = self.validate_language_selection(source_lang, target_lang)
-        if translated_languages:
-            session_data = {
-                'audio_source': audio_source,
-                'speech_rec_lang': self.user_settings.get_default_speech_recognition_language(),
-                'detectable_lang': self.user_settings.get_default_speech_detection_languages(),
-                'translated_languages': translated_languages
-            }
 
+        if translated_languages:
+            session_data = self.get_session_data(source_lang, target_lang, audio_source, translated_languages)
             self.azure_speech_translate_api.start_streaming(session_data)
-            return session_data
 
     def stop_streaming(self):
         self.azure_speech_translate_api.stop_streaming()
+    
+    def get_session_data(self, source_lang, target_lang, audio_source, translated_languages):
+        session_data = {
+                'audio_source': audio_source,
+                'speech_rec_lang': self.user_settings.get_default_speech_recognition_language(),
+                'detectable_lang': self.user_settings.get_default_detectable_languages(),
+                'session_languages': translated_languages
+            }
+        return session_data
 
     def validate_language_selection(self, source_lang, target_lang):
-        if source_lang == target_lang:
+
+        source_lang_code = self.languages.get_language_code_from_name(source_lang)
+        target_lang_code = self.languages.get_language_code_from_name(target_lang)
+
+        if source_lang_code == target_lang_code:
             messagebox.showerror("Language Selection Error", "Source and target languages must be different.")
             return False
 
-        if source_lang not in self.language_options or target_lang not in self.language_options:
-            messagebox.showerror("Language Selection Error", "Please select valid languages from the list.")
-            return False
-
-        translated_languages = {
-                'source': self.language_options[source_lang],
-                'target': self.language_options[target_lang]
+        session_languages = {
+                'source': source_lang_code,
+                'target': target_lang_code
             }
 
-        return translated_languages
+        return session_languages
 
     def update_default_source_language(self, event=None):
         new_language = self.source_language_option.get()
         self.user_settings.set_default_source_language(new_language)
 
-    def update_default_speech_detection_language(self, event=None):
-        source_language = self.source_language_option.get()
-        target_language = self.target_language_option.get()
-        languages = [source_language, target_language]
-        self.user_settings.set_default_speech_detection_languages(languages)
+    def update_default_target_language(self, event=None):
+        new_language = self.target_language_option.get()
+        self.user_settings.set_default_target_language(new_language)
+
+    def update_default_detectable_languages(self, source_language, target_language, event=None):
+        source_language_code = self.languages.get_language_locale_from_name(source_language)  
+        target_language_code = self.languages.get_language_locale_from_name(target_language)
+        languages = [source_language_code, target_language_code]
+        self.user_settings.set_default_detectable_languages(languages)
