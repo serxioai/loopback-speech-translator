@@ -69,7 +69,7 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.target_language_dropdown['values'] = [lang['name'] for lang in self.language_options['languages']]
         self.target_language_dropdown.set(self.user_settings.get_default_target_language())
         self.target_language_dropdown.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
-        self.source_language_dropdown.bind("<<ComboboxSelected>>", self.update_default_target_language)
+        self.target_language_dropdown.bind("<<ComboboxSelected>>", self.update_default_target_language)
 
         # Translation display windows for history and realtime
         self.source_language_text_history = tk.Text(self, bg="white", font=display_font, wrap="word")
@@ -129,8 +129,8 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
 
     def update_recognizing_event_display(self, output_dict):
         for lang, translations in output_dict.items():
-            source_lang_code = self.language_options[self.source_language_option.get()]
-            target_lang_code = self.language_options[self.target_language_option.get()]
+            source_lang_code = self.languages.get_language_code_from_name(self.source_language_option.get())
+            target_lang_code = self.languages.get_language_code_from_name(self.target_language_option.get())
             # Determine which text widget to use
             if lang == source_lang_code:
                 text_widget = self.source_language_realtime_text
@@ -167,11 +167,13 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
                     i += 1
 
     def update_recognized_event_display(self, translations):
-        for lang, translation in translations.items():        
+        for lang, translation in translations.items():
+            source_lang_code = self.languages.get_language_code_from_name(self.source_language_option.get())
+            target_lang_code = self.languages.get_language_code_from_name(self.target_language_option.get())        
             # Determine which text widget to use
-            if lang == self.language_options[self.source_language_option.get()]:
+            if lang == source_lang_code:
                 text_widget = self.source_language_text_history
-            elif lang == self.language_options[self.target_language_option.get()]:
+            elif lang == target_lang_code:
                 text_widget = self.target_language_text_history
 
             # Clear the text widget
@@ -198,23 +200,20 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         
         # Update settings.ini with the new source and target languages
         self.update_default_detectable_languages(source_lang, target_lang)
-        
-        # Get the audio source from the user settings
-        audio_source = self.user_settings.get_audio_source()
 
         # Validate the language selection
         translated_languages = self.validate_language_selection(source_lang, target_lang)
 
         if translated_languages:
-            session_data = self.get_session_data(source_lang, target_lang, audio_source, translated_languages)
+            session_data = self.get_session_data(translated_languages)
             self.azure_speech_translate_api.start_streaming(session_data)
 
     def stop_streaming(self):
         self.azure_speech_translate_api.stop_streaming()
     
-    def get_session_data(self, source_lang, target_lang, audio_source, translated_languages):
+    def get_session_data(self, translated_languages):
         session_data = {
-                'audio_source': audio_source,
+                'audio_source': self.user_settings.get_audio_source(),
                 'speech_rec_lang': self.user_settings.get_default_speech_recognition_language(),
                 'detectable_lang': self.user_settings.get_default_detectable_languages(),
                 'session_languages': translated_languages
@@ -230,10 +229,7 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
             messagebox.showerror("Language Selection Error", "Source and target languages must be different.")
             return False
 
-        session_languages = {
-                'source': source_lang_code,
-                'target': target_lang_code
-            }
+        session_languages = [source_lang_code,target_lang_code]
 
         return session_languages
 

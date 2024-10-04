@@ -26,9 +26,9 @@ class AzureSpeechConfig:
         self.recognized_event_buffer = recognized_event_signal_buffer.RecognizedEventSignalBuffer()
 
     def set_azure_speech_settings(self, config_settings):
-        self.translated_languages = [config_settings['session_languages']['source']] # The UI shows source as the translated language
-        self.speech_recognition_language = str(config_settings['speech_rec_lang'])
-        self.detectable_languages = config_settings['detectable_lang'].split(',')
+        self.translated_languages = config_settings['session_languages'] # The UI shows source as the translated language
+        self.speech_recognition_language = config_settings['speech_rec_lang']        
+        self.detectable_languages = config_settings['detectable_lang']
         self.selected_audio_source = config_settings['audio_source']
         self.build_connection()
 
@@ -59,10 +59,16 @@ class AzureSpeechConfig:
         return speech_translation_config
     
     def set_audio_source(self):
-        if self.selected_audio_source == "blackhole":
-            audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole64ch_UID")
-        elif self.selected_audio_source == "default":
-            audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
+        try:
+            if self.selected_audio_source == "blackhole":
+                audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole64ch_UID")
+            elif self.selected_audio_source == "default":
+                audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
+            else:
+                raise ValueError(f"Invalid audio source: {self.selected_audio_source}")
+        except Exception as e:
+            print(f"Error setting audio source: {e}")
+            audio_config = None
 
         return audio_config
         
@@ -92,18 +98,10 @@ class AzureSpeechConfig:
         
         self.translation_recognizer.canceled.connect(
             lambda evt: self.canceled(evt))
-
-    def get_source_language(self):
-        return self.source_language
-    
-    def get_target_language(self):
-        return self.target_language
-    
-    def get_output_languages(self):
-        return self.output_languages
     
     def update_event_signal_recognizing(self, evt):
         translation_dict = evt.result.translations 
+        print(f"Recognizing: {translation_dict}")
         self.recognizing_event_buffer.update(translation_dict)  
 
     def update_event_signal_recognized(self, evt):
@@ -120,7 +118,7 @@ class AzureSpeechConfig:
         if evt.reason == speechsdk.CancellationReason.Error:
             print(f"Canceled: {evt.reason}")
             print("SESSION STOPPED {}".format(evt))
-            self.reconnect()
+            #self.reconnect()
 
     def reconnect(self):
         print("Attempting to reconnect...")
@@ -133,9 +131,7 @@ class AzureSpeechConfig:
 
     def start_streaming(self):
         self.translation_recognizer.start_continuous_recognition_async()
-        print("start streaming...")
 
     def stop_streaming(self):
         self.translation_recognizer.stop_continuous_recognition_async()
-        print("stopping stream...")
 

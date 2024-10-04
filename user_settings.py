@@ -1,5 +1,6 @@
 import configparser
 import json
+import ast
 class UserSettings:
     def __init__(self):
         self.user_id = None
@@ -31,13 +32,13 @@ class UserSettings:
                 raise Exception("Failed to read the ini file")
 
             # Extract settings
-            self.speech_detection_languages = self.config.get('Settings', 'default_speech_detection_languages', fallback='en-US')
+            self.speech_detection_languages = ast.literal_eval(self.config.get('Settings', 'default_speech_detection_languages', fallback='["en-US", "es-MX"]'))
             self.audio_source = self.config.get('Settings', 'audio_source', fallback='blackhole')
             self.default_target_language = self.config.get('Settings', 'default_target_language', fallback='English (United States)')
             self.logged_in_status = self.config.getboolean('Settings', 'logged_in_status', fallback=True)
             self.default_source_language = self.config.get('Settings', 'default_source_language', fallback='Spanish (Mexico)')
             self.default_speech_recognition_language = self.config.get('Settings', 'default_speech_recognition_language', fallback='en-US')
-            self.default_detectable_languages = self.config.get('Settings', 'default_detectable_languages', fallback='["en-US", "es-MX"]')
+            self.default_detectable_languages = ast.literal_eval(self.config.get('Settings', 'default_detectable_languages', fallback='["en-US", "es-MX"]'))
         except Exception as e:
             print(f"Error reading ini file: {e}")
     
@@ -48,7 +49,10 @@ class UserSettings:
         self.write_ini('default_detectable_languages', languages_str)
 
     def set_default_source_language(self, language): # This is the translation language code without the locale, i.e. es
-        self.write_ini('default_source_language', self.default_source_language)
+        self.write_ini('default_source_language', language)
+
+    def set_default_target_language(self, language): # This is the translation language code without the locale, i.e. es
+        self.write_ini('default_target_language', language)
     
     def set_default_speech_detection_languages(self, languages):
         languages_str = json.dumps(languages)  # Convert list to JSON string

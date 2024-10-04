@@ -23,23 +23,8 @@ class AzureSpeechTranslateAPI:
     def stop_streaming(self):
         self.azure_speech_config.stop_streaming()
 
-    def get_source_language(self):
-        return self.azure_speech_config.speech_recognition_language
-    
-    def get_target_language(self):
-        return self.azure_speech_config.output_languages
-    
-    def get_languages(self):
-        return self.azure_speech_config.languages
-    
     def get_session_id(self) -> str:
         return self.get_session_id
-    
-    def get_speech_recognition_language(self) -> str:
-        return self.azure_speech_config.speech_recognition_language
-    
-    def get_output_languages(self) -> tuple[str, str]:
-        return self.azure_speech_config.output_languages
 
     def get_recognizing_event_buffer(self):
         return self.azure_speech_config.recognizing_event_buffer
@@ -71,7 +56,6 @@ class AzureSpeechTranslateAPI:
         if args.reason == speechsdk.CancellationReason.Error and self.should_reconnect:
             print("Error during session, attempting to reconnect...")
             self.connect()
-
 
     def save_translations(self, timestamp, input_transcription, output_translation):
 
