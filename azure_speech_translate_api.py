@@ -57,15 +57,15 @@ class AzureSpeechTranslateAPI:
             print("Error during session, attempting to reconnect...")
             self.connect()
 
-    def save_translations(self, timestamp, input_transcription, output_translation):
+    def save_translations(self, timestamp, language_pair):
 
         try:
             self.db_manager.translations.insert_one({
                 "user_id": self.user_id,
                 "session_id": self.session_id,
                 "timestamp": timestamp,
-                "in": input_transcription,
-                "out": output_translation,
+                "in": language_pair['source'],
+                "out": language_pair['target'],
             })
             return True
         except Exception as e:

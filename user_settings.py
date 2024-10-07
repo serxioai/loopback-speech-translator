@@ -12,14 +12,16 @@ class UserSettings:
         self.logged_in_status = False
         self.premium_status = None
         self.default_record_translations = None
+        self.audio_source_video_conference = None
+        self.audio_source_default_mic = None
         self.ini_file = 'settings.ini'  # Define the ini_file attribute
         self.config = configparser.ConfigParser()
         self.read_ini()
 
-    def write_ini(self, field, value):
+    def write_ini(self, section, field, value):
         if not self.config.has_section('Settings'):
             self.config.add_section('Settings')
-        self.config.set('Settings', field, value)
+        self.config.set(section, field, value)
         with open(self.ini_file, 'w') as configfile:
             self.config.write(configfile)
 
@@ -32,55 +34,67 @@ class UserSettings:
                 raise Exception("Failed to read the ini file")
 
             # Extract settings
-            self.speech_detection_languages = ast.literal_eval(self.config.get('Settings', 'default_speech_detection_languages', fallback='["en-US", "es-MX"]'))
-            self.audio_source = self.config.get('Settings', 'audio_source', fallback='blackhole')
-            self.default_target_language = self.config.get('Settings', 'default_target_language', fallback='English (United States)')
-            self.logged_in_status = self.config.getboolean('Settings', 'logged_in_status', fallback=True)
-            self.default_source_language = self.config.get('Settings', 'default_source_language', fallback='Spanish (Mexico)')
-            self.default_speech_recognition_language = self.config.get('Settings', 'default_speech_recognition_language', fallback='en-US')
-            self.default_detectable_languages = ast.literal_eval(self.config.get('Settings', 'default_detectable_languages', fallback='["en-US", "es-MX"]'))
-            self.default_record_translations = self.config.getboolean('Settings', 'default_record_translations', fallback=True)
-            self.premium_status = self.config.getboolean('Settings', 'premium_status', fallback=True)
+            self.speech_detection_languages = ast.literal_eval(self.config.get('Language', 'default_speech_detection_languages', fallback='["en-US", "es-MX"]'))
+            self.default_target_language = self.config.get('Language', 'default_target_language', fallback='English (United States)')
+            self.logged_in_status = self.config.getboolean('Authentication', 'logged_in_status', fallback=True)
+            self.default_source_language = self.config.get('Language', 'default_source_language', fallback='Spanish (Mexico)')
+            self.default_speech_recognition_language = self.config.get('Language', 'default_speech_recognition_language', fallback='en-US')
+            self.default_detectable_languages = ast.literal_eval(self.config.get('Language', 'default_detectable_languages', fallback='["en-US", "es-MX"]'))
+            self.premium_status = self.config.getboolean('Authentication', 'premium_status', fallback=True)
+            
+            # Translation
+            self.default_record_translations = self.config.getboolean('Translation', 'default_record_translations', fallback=True)
+
+            # Audio Source
+            self.audio_source_video_conference = self.config.getboolean('Audio Source', 'audio_source_video_conference', fallback=True)
+            self.audio_source_default_mic = self.config.getboolean('Audio Source', 'audio_source_default_mic', fallback=True)
 
         except Exception as e:
             print(f"Error reading ini file: {e}")
     
     # Setters
+
+    def set_audio_source(self, source):
+        if source not in ["default", "video_conference"]:
+            raise ValueError("Invalid audio source. Use 'default' or 'video_conference'.")
+        
+        self.audio_source_default_mic = (source == "default")
+        self.audio_source_video_conference = (source == "video_conference")
+        
+        self.write_ini('Audio Source', 'audio_source_default_mic', str(self.audio_source_default_mic)) 
+        self.write_ini('Audio Source', 'audio_source_video_conference', str(self.audio_source_video_conference))
+
     def set_default_record_translations(self, value):
         self.default_record_translations = value
-        self.write_ini('default_record_translations', str(value))
+        self.write_ini('Translation', 'default_record_translations', str(value))
 
     def set_default_detectable_languages(self, languages):
         languages_str = json.dumps(languages)  # Convert list to JSON string
-        self.write_ini('default_detectable_languages', languages_str)
+        self.write_ini('Settings', 'default_detectable_languages', languages_str)
 
     def set_default_source_language(self, language): # This is the translation language code without the locale, i.e. es
-        self.write_ini('default_source_language', language)
+        self.write_ini('Settings', 'default_source_language', language)
 
     def set_default_target_language(self, language): # This is the translation language code without the locale, i.e. es
-        self.write_ini('default_target_language', language)
+        self.write_ini('Settings', 'default_target_language', language)
     
     def set_default_speech_detection_languages(self, languages):
         languages_str = json.dumps(languages)  # Convert list to JSON string
-        self.write_ini('default_speech_detection_languages', languages_str)
+        self.write_ini('Settings', 'default_speech_detection_languages', languages_str)
     
     def set_default_speech_recognition_language(self, languages):
         self.default_speech_recognition_language = languages
-        self.write_ini('default_speech_recognition_language', languages)
-    
-    def set_audio_source(self, source):
-        self.audio_source = source
-        self.write_ini('audio_source', source)
+        self.write_ini('Settings', 'default_speech_recognition_language', languages)
     
     def set_logged_in_status(self, status):
         self.logged_in_status = status
-        self.write_ini('logged_in_status', str(status))
+        self.write_ini('Settings', 'logged_in_status', str(status))
     
     def set_premium_status(self, status):
         self.premium_status = status
-        self.write_ini('premium_status', str(status))
+        self.write_ini('Settings', 'premium_status', str(status))
 
-    # Getters
+    # Language Settings
 
     def get_language_code_from_locale(self, language_code):
         return self.language_options[language_code]
@@ -97,12 +111,20 @@ class UserSettings:
     def get_default_speech_recognition_language(self):
         return self.default_speech_recognition_language
     
-    def get_audio_source(self):
-        return self.audio_source
-    
+    # Auth Settings
+
     def get_logged_in_status(self):
         return self.logged_in_status
     
     def get_premium_status(self):
         return self.premium_status
+    
+    # Audio Sources
 
+    def get_audio_source(self):
+        if self.audio_source_default_mic:
+            return "default"
+        elif self.audio_source_video_conference:
+            return "video_conference"
+        else:
+            return None  # or a default value if neither is True

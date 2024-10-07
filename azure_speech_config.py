@@ -60,7 +60,7 @@ class AzureSpeechConfig:
     
     def set_audio_source(self):
         try:
-            if self.selected_audio_source == "blackhole":
+            if self.selected_audio_source == "video_conference":
                 audio_config = speechsdk.audio.AudioConfig(device_name="BlackHole64ch_UID")
             elif self.selected_audio_source == "default":
                 audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True) #Use use_default_mic for the bluetooth, choose Anker for the input device
