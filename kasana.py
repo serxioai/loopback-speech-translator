@@ -19,7 +19,7 @@ def connect_db() -> DatabaseManager:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Kasana Ai")
+    root.title("Kasana")
     root.geometry("1024x768")
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
