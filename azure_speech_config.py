@@ -118,7 +118,7 @@ class AzureSpeechConfig:
         if evt.reason == speechsdk.CancellationReason.Error:
             print(f"Canceled: {evt.reason}")
             print("SESSION STOPPED {}".format(evt))
-            #self.reconnect()
+            self.reconnect()
 
     def reconnect(self):
         print("Attempting to reconnect...")
