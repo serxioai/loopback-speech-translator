@@ -11,6 +11,7 @@ from recognized_event_signal_buffer import RecognizedBufferObserver
 from user_settings import UserSettings
 from languages import Languages
 import configparser
+from menu import MenuBar
 
 class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObserver):
     def __init__(self, 
@@ -106,6 +107,7 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.stop_button = tk.Button(self.bottom_bar, text='Stop', command=self.stop_streaming, height=2)
         self.stop_button.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
 
+        self.menu_bar = MenuBar(self.root)
         if not self.user_settings.get_logged_in_status():
             self.start_button.config(state=tk.DISABLED)
             self.stop_button.config(state=tk.DISABLED)

@@ -1,3 +1,12 @@
+# Ignore the build directory
+build/
+
+# Ignore the dist directory
+dist/
+
+# Ignore setup.py
+setup.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -174,3 +183,8 @@ test_*
 .python-version
 env-loopback/
 loopback-speech-translator.code-workspace
+
+.DS_Store
+
+# Test files
+test/
