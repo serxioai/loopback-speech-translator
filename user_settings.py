@@ -11,7 +11,7 @@ class UserSettings:
         self.audio_source = None 
         self.logged_in_status = False
         self.premium_status = None
-
+        self.default_record_translations = None
         self.ini_file = 'settings.ini'  # Define the ini_file attribute
         self.config = configparser.ConfigParser()
         self.read_ini()
@@ -39,10 +39,16 @@ class UserSettings:
             self.default_source_language = self.config.get('Settings', 'default_source_language', fallback='Spanish (Mexico)')
             self.default_speech_recognition_language = self.config.get('Settings', 'default_speech_recognition_language', fallback='en-US')
             self.default_detectable_languages = ast.literal_eval(self.config.get('Settings', 'default_detectable_languages', fallback='["en-US", "es-MX"]'))
+            self.default_record_translations = self.config.getboolean('Settings', 'default_record_translations', fallback=True)
+            self.premium_status = self.config.getboolean('Settings', 'premium_status', fallback=True)
+
         except Exception as e:
             print(f"Error reading ini file: {e}")
     
     # Setters
+    def set_default_record_translations(self, value):
+        self.default_record_translations = value
+        self.write_ini('default_record_translations', str(value))
 
     def set_default_detectable_languages(self, languages):
         languages_str = json.dumps(languages)  # Convert list to JSON string
