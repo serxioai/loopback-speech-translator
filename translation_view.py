@@ -199,9 +199,6 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         # Get the source and target languages from the dropdowns
         source_lang = self.source_language_option.get()
         target_lang = self.target_language_option.get()
-        
-        # Update settings.ini with the new source and target languages
-        self.update_default_detectable_languages(source_lang, target_lang)
 
         # Validate the language selection
         translated_languages = self.validate_language_selection(source_lang, target_lang)
@@ -237,11 +234,13 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
 
     def update_default_source_language(self, event=None):
         new_language = self.source_language_option.get()
-        self.user_settings.set_default_source_language(new_language)
+        self.user_settings.set_default_source_language(new_language) # This is the language code without the locale, i.e. es
+        self.update_default_detectable_languages(new_language, self.target_language_option.get())
 
     def update_default_target_language(self, event=None):
         new_language = self.target_language_option.get()
         self.user_settings.set_default_target_language(new_language)
+        self.update_default_detectable_languages(self.source_language_option.get(), new_language)
 
     def update_default_detectable_languages(self, source_language, target_language, event=None):
         source_language_code = self.languages.get_language_locale_from_name(source_language)  

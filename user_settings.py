@@ -1,6 +1,7 @@
 import configparser
 import json
 import ast
+
 class UserSettings:
     def __init__(self):
         self.user_id = None
@@ -33,13 +34,14 @@ class UserSettings:
             if not self.config.sections():
                 raise Exception("Failed to read the ini file")
 
-            # Extract settings
+            # Language settings
             self.speech_detection_languages = ast.literal_eval(self.config.get('Language', 'default_speech_detection_languages', fallback='["en-US", "es-MX"]'))
             self.default_target_language = self.config.get('Language', 'default_target_language', fallback='English (United States)')
-            self.logged_in_status = self.config.getboolean('Authentication', 'logged_in_status', fallback=True)
             self.default_source_language = self.config.get('Language', 'default_source_language', fallback='Spanish (Mexico)')
             self.default_speech_recognition_language = self.config.get('Language', 'default_speech_recognition_language', fallback='en-US')
             self.default_detectable_languages = ast.literal_eval(self.config.get('Language', 'default_detectable_languages', fallback='["en-US", "es-MX"]'))
+            
+            # Premium options
             self.premium_status = self.config.getboolean('Authentication', 'premium_status', fallback=True)
             
             # Translation
@@ -48,6 +50,9 @@ class UserSettings:
             # Audio Source
             self.audio_source_video_conference = self.config.getboolean('Audio Source', 'audio_source_video_conference', fallback=True)
             self.audio_source_default_mic = self.config.getboolean('Audio Source', 'audio_source_default_mic', fallback=True)
+
+            # Authentication
+            self.logged_in_status = self.config.getboolean('Authentication', 'logged_in_status', fallback=True)
 
         except Exception as e:
             print(f"Error reading ini file: {e}")
@@ -69,30 +74,32 @@ class UserSettings:
         self.write_ini('Translation', 'default_record_translations', str(value))
 
     def set_default_detectable_languages(self, languages):
+        print(languages)
         languages_str = json.dumps(languages)  # Convert list to JSON string
-        self.write_ini('Settings', 'default_detectable_languages', languages_str)
+        self.write_ini('Language', 'default_detectable_languages', languages_str)
 
     def set_default_source_language(self, language): # This is the translation language code without the locale, i.e. es
-        self.write_ini('Settings', 'default_source_language', language)
+        self.write_ini('Language', 'default_source_language', language)
 
     def set_default_target_language(self, language): # This is the translation language code without the locale, i.e. es
-        self.write_ini('Settings', 'default_target_language', language)
+        self.write_ini('Language', 'default_target_language', language)
     
     def set_default_speech_detection_languages(self, languages):
         languages_str = json.dumps(languages)  # Convert list to JSON string
-        self.write_ini('Settings', 'default_speech_detection_languages', languages_str)
+        self.write_ini('Language', 'default_speech_detection_languages', languages_str)
     
     def set_default_speech_recognition_language(self, languages):
         self.default_speech_recognition_language = languages
-        self.write_ini('Settings', 'default_speech_recognition_language', languages)
+        self.write_ini('Language', 'default_speech_recognition_language', languages)
     
     def set_logged_in_status(self, status):
         self.logged_in_status = status
-        self.write_ini('Settings', 'logged_in_status', str(status))
+        self.write_ini('Authentication', 'logged_in_status', str(status))
     
+    # TODO: Implement premium status from database
     def set_premium_status(self, status):
         self.premium_status = status
-        self.write_ini('Settings', 'premium_status', str(status))
+        self.write_ini('Authentication', 'premium_status', str(status))
 
     # Language Settings
 
