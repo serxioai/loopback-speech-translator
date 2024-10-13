@@ -52,20 +52,12 @@ class AuthModel:
         # Implement the logic to retrieve the stored user ID
         # For example, you might read it from a file or a database
         # For now, let's return None as a placeholder
-        return '999'
+        return 
     
     def store_user_id(self, user_id):
+        
         # Store the user ID in a file or database
-        with open('user_session.txt', 'w') as f:
-            f.write(str(user_id))
-
-    '''def get_stored_user_id(self):
-        # Retrieve the stored user ID
-        try:
-            with open('user_session.txt', 'r') as f:
-                return f.read().strip()
-        except FileNotFoundError:
-            return None'''
+        return None
 
     def clear_stored_user_id(self):
         # Clear the stored user ID

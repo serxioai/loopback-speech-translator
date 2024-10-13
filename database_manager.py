@@ -15,7 +15,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class DatabaseManager:
-    def __init__(self, uri, dbname):
+    def __init__(self, uri=DB_URI, dbname=DATABASE_NAME):
         self.client = None
         self.dbname = dbname
         self.uri = uri

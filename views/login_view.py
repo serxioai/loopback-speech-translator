@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-
 class LoginView(tk.Toplevel):
     def __init__(self, master, login_callback, register_callback):
         super().__init__(master)
@@ -14,7 +13,6 @@ class LoginView(tk.Toplevel):
         self.grab_set()
         
         self.build_ui()
-        self.center_window()
 
     def build_ui(self):
         main_frame = ttk.Frame(self, padding="20")
@@ -50,6 +48,23 @@ class LoginView(tk.Toplevel):
     def on_login_pressed(self):
         email = self.email_entry.get()
         password = self.password_entry.get()
+
+        # Validate email and password
+        if not email or not password:
+            tk.messagebox.showerror("Error", "Please enter both email and password.")
+            return
+        
+        # Basic email validation
+        if '@' not in email or '.' not in email:
+            tk.messagebox.showerror("Error", "Please enter a valid email address.")
+            return
+        
+        # Basic password validation (you might want to add more complex rules)
+        if len(password) < 8:
+            tk.messagebox.showerror("Error", "Password must be at least 8 characters long.")
+            return
+        
+        # If validation passes, call the login callback
         self.login_callback(email, password)
 
     def on_sso_pressed(self):
@@ -58,8 +73,3 @@ class LoginView(tk.Toplevel):
 
     def on_register_pressed(self):
         self.register_callback()
-
-    def center_window(self):
-        x = self.master.winfo_x() + (self.master.winfo_width() // 2) - (self.winfo_width() // 2)
-        y = self.master.winfo_y() + (self.master.winfo_height() // 2) - (self.winfo_height() // 2)
-        self.geometry(f"+{x}+{y}")

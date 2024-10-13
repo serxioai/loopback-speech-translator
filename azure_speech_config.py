@@ -52,6 +52,9 @@ class AzureSpeechConfig:
             speech_recognition_language=self.speech_recognition_language,
             target_languages=self.translated_languages
             )
+        
+        # Set the custom translation model by providing the Custom Model ID
+        # speech_translation_config.set_custom_translation_model_id("YourCustomModelID")
 
         # Start and stop continuous recognition with Continuous LID
         speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
@@ -73,6 +76,7 @@ class AzureSpeechConfig:
         return audio_config
         
     def init_translation_recognizer(self) -> speechsdk.translation.TranslationRecognizer:
+        
         translation_recognizer = speechsdk.translation.TranslationRecognizer(
             translation_config=self.speech_translation_config,
             audio_config=self.audio_config,

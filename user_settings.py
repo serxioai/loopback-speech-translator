@@ -135,3 +135,6 @@ class UserSettings:
             return "video_conference"
         else:
             return None  # or a default value if neither is True
+    
+    def is_logged_in(self):
+        return self.logged_in_status

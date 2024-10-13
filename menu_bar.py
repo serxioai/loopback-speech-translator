@@ -1,50 +1,76 @@
 import tkinter as tk
 from tkinter import Menu, ttk
 from user_settings import UserSettings
+from views.login_view import LoginView  # Import the LoginView
+from tkinter import messagebox
 
 class MenuBar:
-    def __init__(self, root):
+    def __init__(self, root, display_login_view_cb, user_settings):
         self.root = root
-        self.user_settings = UserSettings()
+        self.display_login_view_cb = display_login_view_cb
+        self.user_settings = user_settings
+
         self._translate_menu = None  # Make translation menu a private member
-        self.audio_menu = None
+        self._audio_menu = None
+        self._login_menu_index = None   
+
         self.create_menubar()
 
     def create_menubar(self):
         # create a menubar
-        menubar = Menu(self.root)
-        self.root.config(menu=menubar)
+        self.menubar = Menu(self.root)
+        self.root.config(menu=self.menubar)
 
         # create the file_menu
-        file_menu = Menu(menubar, tearoff=0)
+        self.file_menu = Menu(self.menubar, tearoff=0)
 
         # add menu items to the File menu
-        file_menu.add_command(label='Feedback')
-        file_menu.add_command(label='Privacy Policy')
-        file_menu.add_separator()
+        self.file_menu.add_command(label='Feedback')
+        self.file_menu.add_command(label='Privacy Policy')
+        self.file_menu.add_separator()
 
         # add the Input Source menu
-        self.create_input_source_menu(file_menu)
+        self.create_input_source_menu(self.file_menu)
 
-        # add Exit menu item
-        file_menu.add_separator()
-        file_menu.add_command(label='Quit Kasana', command=self.root.destroy)
+        # Determine the label for the Log In/Log Out menu item
+        self.file_menu.add_separator()
+        login_label = 'Log Out' if self.user_settings.is_logged_in() else 'Log In'
+        
+        # Add Log In/Log Out menu item and store its index
+        self.file_menu.add_command(label=login_label, command=self.handle_login_or_logout)
+        self._login_menu_index = self.file_menu.index("end")  # Store the index of the login/logout item
+        
+        # Add Exit menu item
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label='Quit Kasana', command=self.root.destroy)
 
-        menubar.add_cascade(label="Settings", menu=file_menu, underline=0)
+        # add the file menu to the menubar
+        self.menubar.add_cascade(label="Settings", menu=self.file_menu)
 
         # create the Translation menu
-        self.create_translation_menu(menubar)
+        self.create_translation_menu(self.menubar)
 
         # create the Help menu
-        help_menu = Menu(menubar, tearoff=0)
+        help_menu = Menu(self.menubar, tearoff=0)
         help_menu.add_command(label='Welcome')
         help_menu.add_command(label='About...')
 
         # add the Help menu to the menubar
-        menubar.add_cascade(label="Help", menu=help_menu, underline=0)
+        self.menubar.add_cascade(label="Help", menu=help_menu)
 
-        self.root.config(menu=menubar)
+    def handle_login_or_logout(self):
+        if self.user_settings.is_logged_in():
+            self.handle_log_out()
+        else:
+            self.handle_log_in()
 
+    def handle_log_out(self):
+        self.user_settings.set_logged_in_status(False)
+        messagebox.showinfo("Logged Out", "You have been logged out.")
+        self.update_login_menu_label('Log In')
+
+    def handle_log_in(self):
+        self.display_login_view_cb()
 
     def create_translation_menu(self, menubar):
         # create the Translation menu
@@ -121,3 +147,14 @@ class MenuBar:
         else:
             self.user_settings.set_default_record_translations(False)
 
+    def handle_login(self):
+        if not self.user_settings.is_logged_in():
+            # Display the login view using the callback from app_controller
+            self.display_login_view()
+    
+    def update_login_menu_label(self, new_label):
+        print(f"Print new label: {new_label} in menu_bar.py")
+        print(f"Login menu index: {self._login_menu_index} UPDATE_LOGIN_MENU_LABEL in menu_bar.py")
+        print(f"index type: {type(self._login_menu_index)}")
+        # Update the label of the Log In/Log Out menu item using its index
+        self.file_menu.entryconfig(self._login_menu_index, label=new_label)  # Ensure 'label' is used without a dash
