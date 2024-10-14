@@ -153,8 +153,5 @@ class MenuBar:
             self.display_login_view()
     
     def update_login_menu_label(self, new_label):
-        print(f"Print new label: {new_label} in menu_bar.py")
-        print(f"Login menu index: {self._login_menu_index} UPDATE_LOGIN_MENU_LABEL in menu_bar.py")
-        print(f"index type: {type(self._login_menu_index)}")
         # Update the label of the Log In/Log Out menu item using its index
         self.file_menu.entryconfig(self._login_menu_index, label=new_label)  # Ensure 'label' is used without a dash

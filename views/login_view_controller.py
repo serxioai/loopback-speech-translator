@@ -26,7 +26,6 @@ class LoginViewController:
 
     # Callback for the login button click
     def login(self, username, password):
-        print("In the login view controller login method")
         user_doc = self.auth_model.authenticate_user(username, password)
         if user_doc:
             user_id = str(user_doc["_id"])
