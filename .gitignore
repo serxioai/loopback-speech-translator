@@ -41,7 +41,6 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -179,12 +178,48 @@ cython_debug/
 # MongoDb
 test_*
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-.python-version
-env-loopback/
-loopback-speech-translator.code-workspace
+# Virtual Environment
+venv/
+ENV/
+env/
 
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Application specific
+settings.ini
+.env
+
+# macOS
 .DS_Store
+
+# Windows
+Thumbs.db
 
 # Test files
 test/

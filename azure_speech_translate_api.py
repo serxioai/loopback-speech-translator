@@ -1,19 +1,10 @@
-from turtle import done
 import azure.cognitiveservices.speech as speechsdk
-import os
-import time
-import json
-import queue
-import difflib
-import threading
-import os
-import uuid
+
 from azure_speech_config import AzureSpeechConfig
 
 class AzureSpeechTranslateAPI:
-    def __init__(self, user_id, db_manager):
+    def __init__(self, user_id):
         self.user_id = user_id
-        self.db_manager = db_manager
         self.azure_speech_config = AzureSpeechConfig()
 
     def start_streaming(self, encoded_session_data):
@@ -56,18 +47,3 @@ class AzureSpeechTranslateAPI:
         if args.reason == speechsdk.CancellationReason.Error and self.should_reconnect:
             print("Error during session, attempting to reconnect...")
             self.connect()
-
-    def save_translations(self, timestamp, language_pair):
-
-        try:
-            self.db_manager.translations.insert_one({
-                "user_id": self.user_id,
-                "session_id": self.session_id,
-                "timestamp": timestamp,
-                "in": language_pair['source'],
-                "out": language_pair['target'],
-            })
-            return True
-        except Exception as e:
-            print(f"Failed to save translation: {e}")
-            return False
