@@ -1,3 +1,4 @@
+import os
 import json
 
 class Languages:
@@ -7,8 +8,14 @@ class Languages:
         self.load_language_options()
 
     def load_language_options(self):
+        # Get the directory of the current script
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Construct the full path to the JSON file
+        json_path = os.path.join(base_dir, 'languages.json')
+
         # Load the JSON file
-        with open('languages.json', 'r') as file:
+        with open(json_path, 'r') as file:
             self.language_options = json.load(file)
 
     def get_language_code_from_name(self, language_name):

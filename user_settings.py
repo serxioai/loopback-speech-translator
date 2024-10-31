@@ -1,7 +1,7 @@
 import configparser
 import json
 import ast
-
+import os
 class UserSettings:
     def __init__(self):
         self.user_id = None
@@ -15,9 +15,19 @@ class UserSettings:
         self.default_record_translations = None
         self.audio_source_video_conference = None
         self.audio_source_default_mic = None
-        self.ini_file = 'settings.ini'  # Define the ini_file attribute
-        self.config = configparser.ConfigParser()
+        self.config = None
+        self.ini_file = None  # Define the ini_file attribute
+        
+        # Set the ini file path and read the ini file
+        self.set_ini_file_path()
+
+        # Set the users settings from the ini file
         self.read_ini()
+
+    def set_ini_file_path(self):
+        self.config = configparser.ConfigParser()
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.ini_file = os.path.join(base_dir, 'settings.ini')
 
     def write_ini(self, section, field, value):
         if not self.config.has_section('Settings'):

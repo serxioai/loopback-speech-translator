@@ -1,18 +1,14 @@
 # translation_view.py
 
-import json
 import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import ttk
-from login_view import LoginView
 from tkinter import messagebox
 from recognizing_event_signal_buffer import RecognizingBufferObserver
 from recognized_event_signal_buffer import RecognizedBufferObserver
-from user_settings import UserSettings
 from languages import Languages
 import configparser
-from menu_bar import MenuBar
-
+import os
 class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObserver):
     def __init__(self, 
                  root, 
@@ -22,9 +18,6 @@ class TranslationView(tk.Frame, RecognizingBufferObserver, RecognizedBufferObser
         self.root = root    
         self.azure_speech_translate_api = azure_speech_translate_api
         self.user_settings = user_settings
-        
-        self.config = configparser.ConfigParser()
-        self.config.read('settings.ini')
 
      # Initialize languages and language_options
         self.languages = Languages()
