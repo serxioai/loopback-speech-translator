@@ -140,7 +140,7 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
+venv*
 ENV/
 env.bak/
 venv.bak/
@@ -188,3 +188,5 @@ loopback-speech-translator.code-workspace
 
 # Test files
 test/
+
+# 
