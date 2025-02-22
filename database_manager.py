@@ -3,6 +3,7 @@ from pymongo.mongo_client import MongoClient
 import logging
 from pymongo.errors import ConnectionFailure, ConfigurationError
 from dotenv import load_dotenv
+import certifi
 
 DB_PWD = os.environ.get("MONGO_DB_PASSWORD")
 DB_URI = os.environ.get("MONGO_DB_URI")
@@ -22,8 +23,12 @@ class DatabaseManager:
 
     def connect(self):
         try:
-            self.client = MongoClient(self.uri, serverSelectionTimeoutMS=5000)  # Timeout for initial connection attempt
-            self.client.server_info()  # Force a call to check if the connection is successful
+            self.client = MongoClient(
+                self.uri,
+                serverSelectionTimeoutMS=5000,
+                tlsCAFile=certifi.where()
+            )
+            self.client.server_info()
             return True
         except ConnectionFailure as e:
             logging.error(f"Failed to connect to MongoDB: {e}")

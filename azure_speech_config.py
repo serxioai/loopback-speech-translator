@@ -46,20 +46,37 @@ class AzureSpeechConfig:
         self.set_event_callbacks()
 
     def init_speech_translation_config(self):
-        speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
-            subscription=SUBSCRIPTION_KEY,
-            region=SERVICE_REGION,
-            speech_recognition_language=self.speech_recognition_language,
-            target_languages=self.translated_languages
+        try:
+            if not SUBSCRIPTION_KEY or not SERVICE_REGION:
+                print("🔑 Error: Azure credentials missing")
+                raise ValueError("Azure credentials not properly configured")
+                
+            speech_translation_config = speechsdk.translation.SpeechTranslationConfig(
+                subscription=SUBSCRIPTION_KEY,
+                region=SERVICE_REGION
             )
-        
-        # Set the custom translation model by providing the Custom Model ID
-        # speech_translation_config.set_custom_translation_model_id("YourCustomModelID")
+            
+            # Set speech recognition language
+            speech_translation_config.speech_recognition_language = self.speech_recognition_language
+            
+            # Add target languages one by one
+            for language in self.translated_languages:
+                speech_translation_config.add_target_language(language)
+            
+            # Set continuous language ID mode
+            speech_translation_config.set_property(
+                property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, 
+                value='Continuous'
+            )
 
-        # Start and stop continuous recognition with Continuous LID
-        speech_translation_config.set_property(property_id=speechsdk.PropertyId.SpeechServiceConnection_LanguageIdMode, value='Continuous')
+            return speech_translation_config
 
-        return speech_translation_config
+        except ValueError as e:
+            print(f"🔑 Configuration error: {e}")
+            raise
+        except Exception as e:
+            print(f"⚠️ Azure Speech Service error: {e}")
+            raise
     
     def set_audio_source(self):
         try:

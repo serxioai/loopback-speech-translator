@@ -5,14 +5,14 @@ import ast
 class UserSettings:
     def __init__(self):
         self.user_id = None
-        self.default_detectable_languages = None # Language code plus locale, i.e. en-US
-        self.default_speech_recognition_language = None # Language code plus locale, i.e. en-US
-        self.default_source_language = None # Language code only
-        self.default_target_language = None # Language code only
+        self.detectable_languages = None # Language code plus locale, i.e. en-US
+        self.speech_recognition_language = None # Language code plus locale, i.e. en-US
+        self.source_language = None # Language code only
+        self.target_language = None # Language code only
         self.audio_source = None 
         self.logged_in_status = False
         self.premium_status = None
-        self.default_record_translations = None
+        self.record_translations = None
         self.audio_source_video_conference = None
         self.audio_source_default_mic = None
         self.ini_file = 'settings.ini'  # Define the ini_file attribute
